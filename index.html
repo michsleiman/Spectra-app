@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,7 +16,6 @@
         }
         .mono { font-family: 'JetBrains+Mono', monospace; }
         
-        /* High-end subtle scrollbar */
         ::-webkit-scrollbar {
             width: 4px;
             height: 4px;
@@ -34,7 +32,6 @@
             background: rgba(150, 150, 150, 0.4);
         }
         
-        /* Hide native range slider handles to prevent "double handle" issue with custom UI */
         input[type=range].appearance-none::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -53,13 +50,11 @@
             cursor: pointer;
         }
 
-        /* Ensure Firefox also looks decent */
         * {
             scrollbar-width: thin;
             scrollbar-color: rgba(150, 150, 150, 0.2) transparent;
         }
 
-        /* Custom minimal transition animations */
         @keyframes fade-in-slide-down {
             from {
                 opacity: 0;
@@ -71,7 +66,6 @@
             }
         }
 
-        /* Custom 1100px layout logic */
         .canvas-layout-container {
             display: flex;
             flex-direction: column;
@@ -91,7 +85,6 @@
             }
         }
 
-        /* Sidebar & Responsive Logic */
         .sidebar-responsive-container {
             display: flex;
             position: fixed;
@@ -99,7 +92,7 @@
             left: 0;
             bottom: 0;
             z-index: 50;
-            width: 18rem; /* Equivalent to w-72 */
+            width: 18rem;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -124,12 +117,16 @@
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4"
+    "react": "https://esm.sh/react@^19.2.4",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
+    "vite": "https://esm.sh/vite@^7.3.1"
   }
 }
 </script>
 </head>
 <body>
     <div id="root"></div>
+    <!-- Entry point script tag for standard web deployment -->
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>
