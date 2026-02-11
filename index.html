@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spectra Color Systems</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #f5f5f5;
+        }
+        .mono { font-family: 'JetBrains+Mono', monospace; }
+        
+        /* High-end subtle scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(150, 150, 150, 0.2);
+            border-radius: 20px;
+            transition: background 0.2s ease;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(150, 150, 150, 0.4);
+        }
+        
+        /* Hide native range slider handles to prevent "double handle" issue with custom UI */
+        input[type=range].appearance-none::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        
+        input[type=range].appearance-none::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Ensure Firefox also looks decent */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(150, 150, 150, 0.2) transparent;
+        }
+
+        /* Custom minimal transition animations */
+        @keyframes fade-in-slide-down {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Custom 1100px layout logic */
+        .canvas-layout-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1100px) {
+            .canvas-layout-container {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+            .canvas-layout-main {
+                grid-column: span 3 / span 3;
+            }
+            .canvas-layout-side {
+                grid-column: span 1 / span 1;
+            }
+        }
+
+        /* Sidebar & Responsive Logic */
+        .sidebar-responsive-container {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 50;
+            width: 18rem; /* Equivalent to w-72 */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hamburger-trigger {
+            display: flex;
+        }
+
+        @media (min-width: 764px) {
+            .sidebar-responsive-container {
+                position: relative !important;
+                transform: none !important;
+                z-index: 10 !important;
+            }
+            .hamburger-trigger, .sidebar-overlay {
+                display: none !important;
+            }
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
