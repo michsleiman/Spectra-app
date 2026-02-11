@@ -1,20 +1,8 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/drive/1UBOF5QNJwXPELVAADkh-DTE3tpJLFUA3
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Spectra is a professional-grade color engine designed to take the guesswork out of building enterprise-scale design systems.
+While most color generators use standard math (HSL/Hex) that often results in "muddy" or visually inconsistent scales, Spectra uses the OKLCH perceptual color space. This ensures that every shade in your system has the exact same visual weight and brightness across different hues, perfectly matching how the human eye actually perceives color.
+Key Features:
+Perceptual Accuracy: Built on OKLCH for perfectly uniform lightness and saturation curves.
+Constraint-Based Anchoring: Lock your specific brand colors, and the engine dynamically interpolates the rest of the scale to stay in harmony.
+Semantic-First Workflow: Move beyond "Blue-500." Map your colors directly to UI tokens (like text-primary or bg-subtle) for both Light and Dark modes simultaneously.
+AI Design Partner: Use natural language to describe a "vibe" (e.g., "a high-trust medical dashboard with accessible teals") and let Gemini draft your technical starting point.
+Production-Ready Handoff: Export your entire system as Figma Variable-ready JSON or copy live SVG artboards directly into your design tools.
