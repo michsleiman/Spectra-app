@@ -1,7 +1,7 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AIResponse } from "../types";
 
+// Initialize the Gemini AI client using the API key from the environment
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export async function interpretIntent(prompt: string): Promise<AIResponse> {
@@ -39,5 +39,11 @@ export async function interpretIntent(prompt: string): Promise<AIResponse> {
     }
   });
 
-  return JSON.parse(response.text);
+  // Access text directly from response object (property, not method)
+  const text = response.text;
+  if (!text) {
+    throw new Error("The AI response did not contain any text content.");
+  }
+
+  return JSON.parse(text);
 }
