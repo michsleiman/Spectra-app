@@ -126,8 +126,8 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
         }`}
       >
         <main className="h-full overflow-y-auto scroll-smooth">
-          {/* DESKTOP HEADER - Adjusted padding to exactly 1.5rem top/bottom (py-6) */}
-          <header className="hidden sm:flex max-w-[1600px] mx-auto mb-4 flex-col md:flex-row md:items-end justify-between gap-4 py-6 px-6 sm:px-12">
+          {/* DESKTOP HEADER - Removed mb-4 to ensure strict 1.5rem (py-6) spacing around the title */}
+          <header className="hidden sm:flex max-w-[1600px] mx-auto mb-0 flex-col md:flex-row md:items-end justify-between gap-4 py-6 px-6 sm:px-12 text-zinc-100">
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-white">{system.name}</h1>
@@ -140,7 +140,8 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
             </div>
           </header>
 
-          <div className="max-w-[1600px] mx-auto sm:px-4 lg:px-12 pb-24 lg:pb-12">
+          {/* MAIN CONTAINER - Synchronized horizontal padding with toolbar */}
+          <div className="max-w-[1600px] mx-auto px-6 sm:px-12 pb-24 lg:pb-12">
             
             {/* TOP ROW: Sections align bottoms but internal elements are flexible */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
@@ -225,7 +226,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                             {format === 'oklch' && (
                               <div key="oklch-view" className="space-y-4 sm:space-y-6 animate-[fade-in-slide-down_0.2s_ease-out]">
                                 <ControlSliderRaw label="Lightness" val={oklch.l} max={1} step={0.001} gradient={lGradient} onChange={v => handleOklchChange('l', v)} />
-                                <ControlSliderRaw label="Chroma" val={oklch.c} max={0.4} step={0.001} gradient={cGradient} onChange={v => handleOklchChange('c', v)} />
+                                <ControlSliderRaw label="Chroma" val={oklch.c} max={0.4} step={0.001} gradient={lGradient} onChange={v => handleOklchChange('c', v)} />
                                 <ControlSliderRaw label="Hue" val={oklch.h} max={360} step={1} gradient={hGradient} onChange={v => handleOklchChange('h', v)} />
                               </div>
                             )}
@@ -305,8 +306,8 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
               )}
             </div>
 
-            {/* PALETTE PREVIEW SECTION (BELOW TOP ROW) */}
-            <div className="space-y-4 px-6 sm:px-0 mt-8">
+            {/* PALETTE PREVIEW SECTION (BELOW TOP ROW) - Rounded corners updated to rounded-xl */}
+            <div className="space-y-4 mt-8">
                <div className="flex items-center justify-between px-1">
                   <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Color Palette</h3>
                   {!isBaseSystem && (
@@ -322,7 +323,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                     </button>
                   )}
                </div>
-               <div className="flex w-full rounded-[2rem] overflow-x-auto lg:overflow-hidden shadow-2xl border border-white/5 scrollbar-hide bg-zinc-950">
+               <div className="flex w-full rounded-xl overflow-x-auto lg:overflow-hidden shadow-2xl border border-white/5 scrollbar-hide bg-zinc-950">
                   <div className="flex min-w-full lg:min-w-0 flex-1">
                   {system.steps.map((step) => {
                     const isImmutable = isBaseSystem;
@@ -374,7 +375,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
 
             {/* BASE NEUTRALS SPECIAL VIEW */}
             {isBaseSystem && (
-              <div className="bg-zinc-950 sm:rounded-[2rem] p-8 sm:p-20 sm:border sm:border-zinc-800 flex flex-col items-center text-center mt-8">
+              <div className="bg-zinc-950 sm:rounded-[2rem] p-8 sm:p-20 sm:border sm:border-zinc-800 flex flex-col items-center text-center mt-8 text-zinc-100">
                 <div className="max-w-md space-y-6">
                    <div className="w-16 h-1 bg-zinc-800 mx-auto rounded-full" />
                    <h2 className="text-2xl font-black text-white">Base Neutrals</h2>
