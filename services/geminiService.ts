@@ -2,10 +2,9 @@ import { AIResponse } from "../types";
 
 /**
  * PRODUCTION NOTE: 
- * Replace WEBHOOK_URL with your Formspree, Zapier, or Vercel Function URL.
- * Example: 'https://formspree.io/f/your_id'
+ * Using the provided Formspree endpoint for beta waitlist collection.
  */
-const WEBHOOK_URL = ''; 
+const WEBHOOK_URL = 'https://formspree.io/f/meelkwoj'; 
 
 export async function checkTrialStatus(email: string): Promise<{ allowed: boolean; remaining: number; message?: string }> {
   const usedEmails = JSON.parse(localStorage.getItem('spectra_used_trials') || '[]');

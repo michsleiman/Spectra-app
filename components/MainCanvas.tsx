@@ -145,11 +145,11 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
         }`}
       >
         <main className="h-full overflow-y-auto scroll-smooth">
-          {/* HEADER: Syncs with SemanticView mobile padding */}
+          {/* HEADER */}
           <header className="flex max-w-[1600px] mx-auto mb-0 flex-col md:flex-row md:items-end justify-between gap-4 py-6 px-4 sm:px-12 text-zinc-100">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">{system.name}</h1>
+                <h1 className="text-xl lg:text-2xl font-black tracking-tight text-white">{system.name}</h1>
                 {isSynced && !isBaseSystem && (
                   <span className="bg-indigo-600/20 text-indigo-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-indigo-500/20 flex items-center gap-1.5 h-6 sm:h-7 whitespace-nowrap">
                     Synced
@@ -273,7 +273,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                               </div>
                               <button 
                                 onClick={() => onLockStep(quickStep, quickColor, true)}
-                                className="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-white h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-md shadow-indigo-600/10 active:scale-[0.98] transition-all"
+                                className="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-white h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-md shadow-indigo-600/10 active:scale-0.98 transition-all"
                               >
                                 Update
                               </button>
@@ -318,10 +318,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                     </button>
                   )}
                </div>
-               {/* 
-                 PALETTE GRID (MOBILE): 3 columns, auto-rows 
-                 PALETTE FLEX (DESKTOP): fluid flexbox
-               */}
                <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-zinc-950">
                   <div className="grid grid-cols-3 lg:flex lg:flex-row min-w-full lg:min-w-0 flex-1">
                   {system.steps.map((step) => {
