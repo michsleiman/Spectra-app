@@ -186,11 +186,14 @@ const AIPromptModal: React.FC<AIPromptModalProps> = ({ onClose }) => {
         
         <div className="px-6 py-4 sm:px-10 sm:py-6 bg-zinc-950/50 border-t border-zinc-800/50 flex items-center justify-between text-[8px] sm:text-[10px] text-zinc-600 flex-shrink-0">
           <div className="flex items-center gap-3 sm:gap-4">
-             <span className="uppercase font-black tracking-widest opacity-50">Status: {step === 'success' ? 'Requested' : 'Guest'}</span>
+             <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                <span className="uppercase font-black tracking-widest text-zinc-400">Live Connection: meelkwoj</span>
+             </div>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
              <span className="w-1 h-1 bg-indigo-500 rounded-full" />
-             <span className="font-bold">Waitlist Protocol v1.1</span>
+             <span className="font-bold opacity-60">Waitlist Protocol v1.1</span>
           </div>
         </div>
       </div>
