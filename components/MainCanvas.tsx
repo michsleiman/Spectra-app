@@ -145,12 +145,13 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
         }`}
       >
         <main className="h-full overflow-y-auto scroll-smooth">
-          <header className="hidden sm:flex max-w-[1600px] mx-auto mb-0 flex-col md:flex-row md:items-end justify-between gap-4 py-6 px-6 sm:px-12 text-zinc-100">
+          {/* HEADER: Unified padding px-4 sm:px-12 */}
+          <header className="flex max-w-[1600px] mx-auto mb-0 flex-col md:flex-row md:items-end justify-between gap-4 py-6 px-4 sm:px-12 text-zinc-100">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-white">{system.name}</h1>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">{system.name}</h1>
                 {isSynced && !isBaseSystem && (
-                  <span className="bg-indigo-600/20 text-indigo-400 text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-indigo-500/20 flex items-center gap-1.5">
+                  <span className="bg-indigo-600/20 text-indigo-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-indigo-500/20 flex items-center gap-1.5 h-6 sm:h-7 whitespace-nowrap">
                     Synced
                   </span>
                 )}
@@ -158,23 +159,17 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
             </div>
           </header>
 
-          <div className="max-w-[1600px] mx-auto px-6 sm:px-12 pb-24 lg:pb-12">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-12 pb-24 lg:pb-12">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
               {!isBaseSystem && (
                 <div className="lg:col-span-3">
-                  <div className="bg-zinc-950 sm:rounded-[2rem] p-0 sm:p-8 sm:border sm:border-zinc-800 shadow-2xl relative overflow-hidden group flex flex-col h-full">
+                  <div className="bg-zinc-950 sm:rounded-[2rem] p-0 sm:p-8 sm:border sm:border-zinc-800 shadow-2xl relative overflow-hidden flex flex-col h-full">
                     <div className="relative z-10 grid grid-cols-1 xl:grid-cols-12 xl:gap-10 flex-1">
-                      <div className="xl:col-span-4 sticky top-0 z-30 sm:relative sm:top-auto px-0 sm:px-0 flex flex-col h-full">
-                        <div className="bg-zinc-950/90 backdrop-blur-3xl border-b border-zinc-800/50 sm:border-0 p-4 sm:p-0 flex flex-col flex-1">
-                           <div className="flex items-center justify-between mb-4 sm:hidden px-2">
-                              <div className="flex items-center gap-2">
-                                 <div className="w-1.5 h-4 bg-indigo-500 rounded-full" />
-                                 <span className="text-xs font-black uppercase tracking-widest text-white">{system.name}</span>
-                              </div>
-                              {isSynced && <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Synced</span>}
-                           </div>
+                      
+                      <div className="xl:col-span-4 sticky top-0 z-30 sm:relative sm:top-auto flex flex-col h-full">
+                        <div className="bg-zinc-950 sm:bg-transparent sm:border-0 p-0 sm:p-0 flex flex-col flex-1">
                            <div 
-                             className="w-full min-h-[128px] xl:flex-1 rounded-[2rem] sm:rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500"
+                             className="w-full min-h-[140px] xl:flex-1 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500"
                              style={{ backgroundColor: quickColor }}
                            >
                               <div className="relative z-10 flex flex-col items-center gap-2">
@@ -184,23 +179,25 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                               </div>
                            </div>
                         </div>
-                        <div className="hidden xl:block mt-8 w-full space-y-3 px-2">
-                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] ml-1 block">Anchor Step</label>
-                            <div className="flex items-center gap-2">
-                              <div className="relative flex-1 h-12">
-                                <select 
-                                  value={quickStep}
-                                  onChange={(e) => setQuickStep(parseInt(e.target.value))}
-                                  className="w-full h-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all appearance-none text-center"
-                                >
-                                  {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(s => (
-                                    <option key={s} value={s}>{s}</option>
-                                  ))}
-                                </select>
+
+                        {/* DESKTOP STEP PICKER: Matched to mobile style */}
+                        <div className="hidden xl:block mt-8 w-full px-2">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center px-4 h-12">
+                                 <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mr-2">Step</span>
+                                 <select 
+                                   value={quickStep}
+                                   onChange={(e) => setQuickStep(parseInt(e.target.value))}
+                                   className="flex-1 bg-transparent text-sm font-bold text-white focus:outline-none appearance-none text-center"
+                                 >
+                                   {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(s => (
+                                     <option key={s} value={s}>{s}</option>
+                                   ))}
+                                 </select>
                               </div>
                               <button 
                                 onClick={() => onLockStep(quickStep, quickColor, true)}
-                                className="flex-[1.5] h-12 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-[10px] lg:text-xs uppercase tracking-[0.2em] shadow-md shadow-indigo-600/10 active:scale-[0.97] transition-all whitespace-nowrap"
+                                className="flex-[1.5] bg-indigo-600 hover:bg-indigo-500 text-white h-12 rounded-2xl font-black text-[10px] lg:text-xs uppercase tracking-[0.2em] shadow-md shadow-indigo-600/10 active:scale-[0.97] transition-all whitespace-nowrap"
                               >
                                 Update
                               </button>
@@ -208,17 +205,17 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         </div>
                       </div>
 
-                      <div className="xl:col-span-8 px-6 pt-12 pb-6 sm:p-0 space-y-4 sm:space-y-6">
+                      <div className="xl:col-span-8 px-0 sm:px-0 pt-10 pb-6 sm:p-0 space-y-4 sm:space-y-6">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                           <div className="space-y-1">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Perceptual Matrix</h3>
                           </div>
-                          <div className="flex bg-zinc-900/50 rounded-2xl p-1 border border-zinc-800/50 w-full sm:w-auto">
+                          <div className="flex bg-zinc-900/50 rounded-2xl p-1 border border-zinc-800/50 w-full sm:w-auto overflow-hidden">
                             {['oklch', 'rgb', 'hex'].map((f) => (
                               <button
                                 key={f}
                                 onClick={() => setFormat(f as any)}
-                                className={`flex-1 sm:flex-none px-5 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${format === f ? 'bg-zinc-800 text-indigo-400 shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-400'}`}
+                                className={`flex-1 sm:flex-none px-4 lg:px-5 py-2.5 text-[9px] lg:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${format === f ? 'bg-zinc-800 text-indigo-400 shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-400'}`}
                               >
                                 {f}
                               </button>
@@ -260,6 +257,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                           </div>
                         </div>
 
+                        {/* MOBILE STEP PICKER */}
                         <div className="xl:hidden pt-2 border-t border-zinc-900/50">
                             <div className="flex items-center gap-3">
                               <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center px-4 h-12">
@@ -305,7 +303,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
               )}
             </div>
 
-            <div className="space-y-4 mt-8">
+            <div className="space-y-4 mt-12">
                <div className="flex items-center justify-between px-1">
                   <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Color Palette</h3>
                   {!isBaseSystem && (
