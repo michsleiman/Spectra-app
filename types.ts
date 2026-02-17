@@ -21,6 +21,7 @@ export interface SystemControls {
   punch: number; 
   steepness: number; 
   darkness: number; 
+  hueRotation: number; // New: -60 to 60 degrees
   accessibilitySafe: boolean;
 }
 

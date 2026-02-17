@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { ColorSystem, Palette, SystemType, SystemControls, AIResponse, SemanticToken, ThemeMode } from './types';
 import { generateScale } from './utils/interpolation';
@@ -11,8 +12,9 @@ import ExportModal from './components/ExportModal';
 
 const DEFAULT_CONTROLS: SystemControls = {
   punch: 0.15,
-  steepness: 0.4, // Globally decreased from 0.6 to 0.4 for a more linear lightness distribution
-  darkness: 0, // Decreased to the max (0) globally for lighter deep tones
+  steepness: 0.4, 
+  darkness: 0, 
+  hueRotation: 0,
   accessibilitySafe: true
 };
 
@@ -372,7 +374,7 @@ const App: React.FC = () => {
   }, [theme, systems]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100 selection:bg-indigo-500/30">
+    <div className="flex h-[100dvh] w-screen overflow-hidden bg-zinc-950 text-zinc-100 selection:bg-indigo-500/30">
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 sidebar-overlay"

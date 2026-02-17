@@ -1,23 +1,18 @@
+
 import { OKLCH, ColorStep, ColorSystem } from '../types';
 import { oklchToHex, calculateContrast, getUsageRecommendation } from './colorUtils';
 
 /**
  * Stable Perceptual Scale Generator for OKLCH.
- * 
- * DESIGN PRINCIPLE: 
- * 1. The scale is anchored by White (0) and a Black point (1000).
- * 2. It uses a "System Midpoint" (500) derived from base Hue/Chroma.
- * 3. User locks act as additional anchor points.
- * 4. We use piecewise linear interpolation in OKLCH space, 
- *    with Lightness shaped by a global "Steepness" curve.
  */
 export function generateScale(system: ColorSystem): ColorStep[] {
   const stepIDs = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
   const activeAnchors = system.steps.filter(s => s.isLocked);
   
-  // 1. SYSTEM IDENTITY (STABLE)
+  // 1. SYSTEM IDENTITY
   const seedHue = system.baseHue;
   const seedChroma = system.baseChroma;
+  const { darkness, steepness, punch, hueRotation } = system.controls;
 
   // 2. CONSTRUCT ANCHOR MAP
   let anchorPoints: Array<{ id: number; oklch: OKLCH }> = activeAnchors.map(a => ({
@@ -25,18 +20,21 @@ export function generateScale(system: ColorSystem): ColorStep[] {
     oklch: a.oklch
   }));
 
-  const { darkness, steepness, punch } = system.controls;
-
   // Boundary Points (The pure white and the calculated black/deep-tone)
   const blackL = 0.05 * (1 - darkness);
-  const whiteAnchor = { id: 0, oklch: { l: 0.998, c: 0.001, h: seedHue } };
-  const blackAnchor = { id: 1000, oklch: { l: blackL, c: 0.005, h: seedHue } };
+  
+  // ATMOSPHERIC DRIFT: Hue rotates as it approaches boundaries
+  // Note: We use 500 as the pivot point where hue is exactly seedHue
+  const whiteHue = (seedHue + hueRotation) % 360;
+  const blackHue = (seedHue - hueRotation + 360) % 360;
+
+  const whiteAnchor = { id: 0, oklch: { l: 0.998, c: 0.001, h: whiteHue } };
+  const blackAnchor = { id: 1000, oklch: { l: blackL, c: 0.005, h: blackHue } };
 
   if (!anchorPoints.find(a => a.id === 0)) anchorPoints.push(whiteAnchor);
   if (!anchorPoints.find(a => a.id === 1000)) anchorPoints.push(blackAnchor);
 
-  // VIRTUAL MIDPOINT: To keep the scale stable, we always maintain the system's "Seed" 
-  // as an anchor point at 500 unless the user has specifically locked Step 500.
+  // VIRTUAL MIDPOINT
   if (!anchorPoints.find(a => a.id === 500)) {
     anchorPoints.push({ id: 500, oklch: { l: 0.5, c: seedChroma, h: seedHue } });
   }
@@ -67,7 +65,6 @@ export function generateScale(system: ColorSystem): ColorStep[] {
     const t = (id - lower.id) / (upper.id - lower.id);
 
     // --- CURVE STEEPNESS (LIGHTNESS BIAS) ---
-    // Apply an S-curve to Lightness for better perceived contrast steps.
     const getBiasedT = (rawT: number, s: number) => {
       if (s === 0.5) return rawT;
       const p = Math.pow(2, (s - 0.5) * 4);
@@ -76,7 +73,6 @@ export function generateScale(system: ColorSystem): ColorStep[] {
         : 1 - Math.pow(2 * (1 - rawT), p) / 2;
     };
 
-    // Lightness uses the biased progress
     const t_lightness = getBiasedT(t, steepness);
     const l = lower.oklch.l + (upper.oklch.l - lower.oklch.l) * t_lightness;
 
@@ -92,11 +88,11 @@ export function generateScale(system: ColorSystem): ColorStep[] {
     // Chroma: Piecewise linear + optional Punch boost
     let c = lower.oklch.c + (upper.oklch.c - lower.oklch.c) * t;
     
-    // Apply Chroma Punch: Amplifies mid-scale colors based on the punch control
+    // Apply Chroma Punch
     const midWeight = Math.max(0, Math.cos(((id - 500) / 750) * Math.PI / 2));
     c *= (1 + (punch * 0.8 * midWeight));
 
-    // Perceptual Clamping: Prevents color blowout at extreme lightness
+    // Perceptual Clamping
     const gamutLimiter = Math.sin(l * Math.PI);
     const finalC = c * Math.pow(gamutLimiter, 0.45);
 

@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { ColorSystem, SemanticToken, ThemeMode, SemanticCategory, SystemType } from '../types';
 
@@ -77,6 +78,24 @@ const SemanticView: React.FC<SemanticViewProps> = ({ semantics, systems, theme, 
         ${mobileTab === 'tokens' ? 'flex' : 'hidden lg:flex'}
         ${theme === 'light' ? 'bg-[#F9FAFB] border-zinc-200' : 'bg-[#0E0E0F] border-zinc-800'}
       `}>
+        {/* MOBILE VIEW NAVIGATION - Robust sticky header */}
+        <div className="lg:hidden sticky top-0 z-50 bg-inherit border-b border-zinc-200 dark:border-zinc-800 p-4">
+            <div className={`flex bg-zinc-900/10 p-1 rounded-2xl border ${theme === 'light' ? 'bg-zinc-100 border-zinc-200' : 'bg-zinc-950 border-zinc-800'}`}>
+                <button 
+                  onClick={() => setMobileTab('tokens')}
+                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab === 'tokens' ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-500'}`}
+                >
+                  Tokens
+                </button>
+                <button 
+                  onClick={() => setMobileTab('preview')}
+                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab === 'preview' ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-500'}`}
+                >
+                  Preview
+                </button>
+            </div>
+        </div>
+
         <header className="p-6 lg:p-8 pb-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 lg:gap-4">
@@ -207,7 +226,7 @@ const SemanticView: React.FC<SemanticViewProps> = ({ semantics, systems, theme, 
           )}
         </header>
 
-        <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 space-y-8 lg:space-y-10 pb-32">
+        <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 space-y-8 lg:space-y-10 pb-24">
           {categories.map((cat) => {
             const catTokens = visibleSemantics.filter(s => s.category === cat);
             if (catTokens.length === 0) return null;
@@ -244,27 +263,30 @@ const SemanticView: React.FC<SemanticViewProps> = ({ semantics, systems, theme, 
         ${mobileTab === 'preview' ? 'flex' : 'hidden lg:flex'}
         ${theme === 'light' ? 'bg-white' : 'bg-[#0A0A0B]'}
       `}>
-        <div className="h-full w-full flex items-center justify-center p-4 xl:p-12 overflow-y-auto">
-          <div className="w-full max-w-4xl">
+        {/* MOBILE VIEW NAVIGATION - Sticky header for preview too */}
+        <div className="lg:hidden sticky top-0 z-50 bg-inherit border-b border-zinc-200 dark:border-zinc-800 p-4">
+            <div className={`flex bg-zinc-900/10 p-1 rounded-2xl border ${theme === 'light' ? 'bg-zinc-100 border-zinc-200' : 'bg-zinc-950 border-zinc-800'}`}>
+                <button 
+                  onClick={() => setMobileTab('tokens')}
+                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab === 'tokens' ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-500'}`}
+                >
+                  Tokens
+                </button>
+                <button 
+                  onClick={() => setMobileTab('preview')}
+                  className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab === 'preview' ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-500'}`}
+                >
+                  Preview
+                </button>
+            </div>
+        </div>
+
+        {/* Vertical alignment fix for mobile preview - items-start ensures it doesn't clip the top */}
+        <div className="h-full w-full flex items-start lg:items-center justify-center p-4 xl:p-12 overflow-y-auto">
+          <div className="w-full max-w-4xl pt-8 lg:pt-0 pb-24 lg:pb-0">
              <LivePreview semantics={semantics} theme={theme} />
           </div>
         </div>
-      </div>
-
-      {/* Mobile Segmented Control */}
-      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full p-1.5 shadow-2xl flex gap-1 w-[240px]">
-        <button 
-          onClick={() => setMobileTab('tokens')}
-          className={`flex-1 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab === 'tokens' ? 'bg-indigo-600 text-white' : 'text-zinc-500'}`}
-        >
-          Tokens
-        </button>
-        <button 
-          onClick={() => setMobileTab('preview')}
-          className={`flex-1 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab === 'preview' ? 'bg-indigo-600 text-white' : 'text-zinc-500'}`}
-        >
-          Preview
-        </button>
       </div>
     </div>
   );
@@ -284,65 +306,76 @@ const SemanticRow: React.FC<{
   const displaySystemType = (currentStep === 'white' || currentStep === 'black') ? 'base' : sem.systemType;
 
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-center justify-between py-3 px-3 rounded-2xl transition-all group gap-3 ${
+    <div className={`flex flex-row items-center justify-between h-12 py-2 px-3 rounded-2xl transition-all group gap-2 ${
       theme === 'light' ? 'hover:bg-zinc-200/50' : 'hover:bg-zinc-900/60'
     }`}>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 min-w-0 flex-1 h-full">
         <div 
-          className="w-5 h-5 rounded-full shadow-sm border border-[#D4D4D4] flex-shrink-0" 
+          className="w-4 h-4 rounded-full shadow-sm border border-zinc-200/30 flex-shrink-0" 
           style={{ backgroundColor: sem.hex }}
         />
-        <span className={`text-[11px] font-bold tracking-tight ${theme === 'light' ? 'text-zinc-800' : 'text-zinc-200'}`}>
+        <span className={`text-[11px] font-bold tracking-tight truncate leading-none pt-[1px] ${theme === 'light' ? 'text-zinc-800' : 'text-zinc-200'}`}>
           {sem.name}
         </span>
       </div>
 
-      <div className="flex items-center gap-2 justify-end">
-        <div className={`flex items-center gap-1.5 p-1 rounded-xl border transition-colors ${
+      <div className="flex items-center gap-1.5 flex-shrink-0 h-full">
+        <div className={`flex items-center gap-0.5 p-0.5 rounded-xl border transition-colors h-10 ${
           theme === 'light' ? 'bg-white border-zinc-200 shadow-sm' : 'bg-zinc-950 border-zinc-800'
         }`}>
-          <select 
-            value={displaySystemType}
-            onChange={(e) => onUpdate(sem.id, e.target.value as SystemType, currentStep)}
-            className={`bg-transparent text-[9px] font-black uppercase tracking-widest px-2 py-1 outline-none transition-colors ${
-              theme === 'light' ? 'text-zinc-700' : 'text-zinc-400'
-            }`}
-          >
-            {systems.map(sys => (
-              <option key={sys.id} value={sys.type} className={theme === 'light' ? 'text-zinc-900 bg-white' : 'text-white bg-zinc-950'}>
-                {sys.name}
-              </option>
-            ))}
-          </select>
-          <div className={`w-px h-3 ${theme === 'light' ? 'bg-zinc-300' : 'bg-zinc-800'}`} />
-          <select 
-            value={currentStep}
-            onChange={(e) => {
-              const val = e.target.value;
-              const step = (val === 'white' || val === 'black') ? val : parseInt(val);
-              // When switching to W or B, we suggest switching the system type to 'base' to maintain architectural integrity.
-              const systemToUse = (val === 'white' || val === 'black') ? 'base' : sem.systemType;
-              onUpdate(sem.id, systemToUse as SystemType, step as any);
-            }}
-            className={`bg-transparent text-[9px] font-mono font-black px-2 py-1 outline-none transition-colors ${
-              theme === 'light' ? 'text-zinc-700' : 'text-zinc-400'
-            }`}
-          >
-            <option value="white" className={theme === 'light' ? 'text-zinc-900 bg-white' : 'text-white bg-zinc-950'}>W</option>
-            {steps.map(s => (
-              <option key={s} value={s} className={theme === 'light' ? 'text-zinc-900 bg-white' : 'text-white bg-zinc-950'}>{s}</option>
-            ))}
-            <option value="black" className={theme === 'light' ? 'text-zinc-900 bg-white' : 'text-white bg-zinc-950'}>B</option>
-          </select>
+          <div className="relative flex items-center h-full">
+            <select 
+                value={displaySystemType}
+                onChange={(e) => onUpdate(sem.id, e.target.value as SystemType, currentStep)}
+                className={`bg-transparent text-[8px] sm:text-[9px] font-black uppercase tracking-widest pl-2 pr-4 h-full outline-none transition-colors appearance-none cursor-pointer text-left ${
+                theme === 'light' ? 'text-zinc-700' : 'text-zinc-400'
+                }`}
+            >
+                {systems.map(sys => (
+                <option key={sys.id} value={sys.type} className={theme === 'light' ? 'text-zinc-900 bg-white' : 'text-white bg-zinc-950'}>
+                    {sys.name}
+                </option>
+                ))}
+            </select>
+            <div className="absolute right-1 pointer-events-none opacity-40">
+                <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+            </div>
+          </div>
+          
+          <div className={`w-px h-3 self-center ${theme === 'light' ? 'bg-zinc-200' : 'bg-zinc-800'}`} />
+          
+          <div className="relative flex items-center h-full">
+            <select 
+                value={currentStep}
+                onChange={(e) => {
+                const val = e.target.value;
+                const step = (val === 'white' || val === 'black') ? val : parseInt(val);
+                const systemToUse = (val === 'white' || val === 'black') ? 'base' : sem.systemType;
+                onUpdate(sem.id, systemToUse as SystemType, step as any);
+                }}
+                className={`bg-transparent text-[8px] sm:text-[9px] font-mono font-black pl-2 pr-4 h-full outline-none transition-colors appearance-none cursor-pointer text-center ${
+                theme === 'light' ? 'text-zinc-700' : 'text-zinc-400'
+                }`}
+            >
+                <option value="white" className={theme === 'light' ? 'text-zinc-900 bg-white' : 'text-white bg-zinc-950'}>W</option>
+                {steps.map(s => (
+                <option key={s} value={s} className={theme === 'light' ? 'text-zinc-900 bg-white' : 'text-white bg-zinc-950'}>{s}</option>
+                ))}
+                <option value="black" className={theme === 'light' ? 'text-zinc-900 bg-white' : 'text-white bg-zinc-950'}>B</option>
+            </select>
+            <div className="absolute right-1 pointer-events-none opacity-40">
+                <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+            </div>
+          </div>
         </div>
         
         <button 
           onClick={(e) => { e.stopPropagation(); onDelete(sem.id); }}
-          className={`p-1.5 rounded-lg transition-colors ${
+          className={`p-1.5 rounded-lg transition-colors flex items-center justify-center ${
             theme === 'light' ? 'text-zinc-400 hover:bg-red-50 hover:text-red-500' : 'text-zinc-600 hover:bg-red-500/10 hover:text-red-500'
           }`}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>
     </div>
@@ -434,7 +467,7 @@ const LivePreview = ({ semantics, theme }: { semantics: SemanticToken[], theme: 
       {/* 5. Alerts & Banners */}
       <div className="space-y-3">
         {/* Complex Alert (Warning) */}
-        <div className="p-6 rounded-[1.5rem] border-2 relative overflow-hidden shadow-lg" style={{ backgroundColor: get('bg-warning-light'), borderColor: get('border-warning') }}>
+        <div className="p-6 rounded-xl border-2 relative overflow-hidden shadow-lg" style={{ backgroundColor: get('bg-warning-light'), borderColor: get('border-warning') }}>
             <div className="flex gap-4">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ color: get('fg-warning') }}>
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>

@@ -186,7 +186,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ palette, onClose }) => {
 
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center p-4 lg:p-8 overflow-hidden transition-all duration-300 ${isOpen ? 'bg-black/95 backdrop-blur-2xl' : 'bg-black/0 backdrop-blur-0 pointer-events-none'}`}>
-      <div className={`bg-zinc-900 w-full max-w-6xl max-h-[90vh] rounded-[2.5rem] border border-zinc-800 overflow-hidden shadow-2xl flex flex-col transition-all duration-300 transform ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'}`}>
+      <div className={`bg-zinc-900 w-full max-w-6xl max-h-[90vh] rounded-[1.5rem] border border-zinc-800 overflow-hidden shadow-2xl flex flex-col transition-all duration-300 transform ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'}`}>
         
         {/* Simplified Header */}
         <div className="p-6 border-b border-zinc-800 flex justify-end items-center bg-zinc-900/50">
