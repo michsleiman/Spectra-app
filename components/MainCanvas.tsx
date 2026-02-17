@@ -145,7 +145,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
         }`}
       >
         <main className="h-full overflow-y-auto scroll-smooth">
-          {/* HEADER: Unified padding px-4 sm:px-12 */}
+          {/* HEADER: Syncs with SemanticView mobile padding */}
           <header className="flex max-w-[1600px] mx-auto mb-0 flex-col md:flex-row md:items-end justify-between gap-4 py-6 px-4 sm:px-12 text-zinc-100">
             <div>
               <div className="flex items-center gap-3">
@@ -180,7 +180,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                            </div>
                         </div>
 
-                        {/* DESKTOP STEP PICKER: Matched to mobile style */}
                         <div className="hidden xl:block mt-8 w-full px-2">
                             <div className="flex items-center gap-3">
                               <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center px-4 h-12">
@@ -319,8 +318,12 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                     </button>
                   )}
                </div>
-               <div className="flex w-full rounded-xl overflow-x-auto lg:overflow-hidden shadow-2xl border border-white/5 bg-zinc-950">
-                  <div className="flex min-w-full lg:min-w-0 flex-1">
+               {/* 
+                 PALETTE GRID (MOBILE): 3 columns, auto-rows 
+                 PALETTE FLEX (DESKTOP): fluid flexbox
+               */}
+               <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-zinc-950">
+                  <div className="grid grid-cols-3 lg:flex lg:flex-row min-w-full lg:min-w-0 flex-1">
                   {system.steps.map((step) => {
                     const isImmutable = isBaseSystem;
                     const contrastTextColor = step.contrastOnBlack > step.contrastOnWhite ? 'text-black' : 'text-white';
@@ -329,12 +332,12 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                     return (
                       <div 
                         key={step.id} 
-                        className={`group relative flex-1 min-w-[100px] lg:min-w-0 h-48 lg:h-64 transition-all ${isImmutable ? 'cursor-default' : 'cursor-default'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
+                        className={`group relative h-32 lg:h-64 lg:flex-1 transition-all ${isImmutable ? 'cursor-default' : 'cursor-default'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
                         style={{ backgroundColor: step.hex }}
                       >
-                         <div className={`absolute inset-0 flex flex-col justify-between p-4 pointer-events-none`}>
+                         <div className={`absolute inset-0 flex flex-col justify-between p-3 sm:p-4 pointer-events-none`}>
                             <div className="flex justify-between items-start pointer-events-auto relative">
-                              <span className={`text-[11px] font-black tracking-tighter ${contrastTextColor}`}>{step.id}</span>
+                              <span className={`text-[10px] sm:text-[11px] font-black tracking-tighter ${contrastTextColor}`}>{step.id}</span>
                               
                               {!isImmutable && (
                                 <div className="relative" ref={isMenuOpen ? menuRef : null}>
@@ -343,13 +346,13 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                       e.stopPropagation();
                                       setActiveMenuId(isMenuOpen ? null : step.id);
                                     }}
-                                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                                    className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all ${
                                       isMenuOpen 
                                         ? 'bg-white/30 backdrop-blur-md opacity-100' 
                                         : 'bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100'
                                     } ${contrastTextColor}`}
                                   >
-                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
                                       <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
                                     </svg>
                                   </button>
@@ -390,18 +393,18 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                               )}
                             </div>
                             
-                            <div className="space-y-3">
-                              <div className={`flex flex-col gap-1.5 leading-none opacity-80 ${contrastTextColor}`}>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[11px] font-black">W</span>
-                                  <span className="text-[11px] font-mono font-black">{step.contrastOnWhite.toFixed(1)}</span>
+                            <div className="space-y-1.5 sm:space-y-3">
+                              <div className={`flex flex-col gap-0.5 sm:gap-1.5 leading-none opacity-80 ${contrastTextColor}`}>
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                  <span className="text-[9px] sm:text-[11px] font-black">W</span>
+                                  <span className="text-[9px] sm:text-[11px] font-mono font-black">{step.contrastOnWhite.toFixed(1)}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[11px] font-black">B</span>
-                                  <span className="text-[11px] font-mono font-black">{step.contrastOnBlack.toFixed(1)}</span>
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                  <span className="text-[9px] sm:text-[11px] font-black">B</span>
+                                  <span className="text-[9px] sm:text-[11px] font-mono font-black">{step.contrastOnBlack.toFixed(1)}</span>
                                 </div>
                               </div>
-                              <span className={`text-[10px] font-mono font-black break-all uppercase tracking-tighter ${contrastTextColor}`}>{step.hex}</span>
+                              <span className={`text-[9px] sm:text-[10px] font-mono font-black break-all uppercase tracking-tighter ${contrastTextColor}`}>{step.hex}</span>
                             </div>
                          </div>
                       </div>
