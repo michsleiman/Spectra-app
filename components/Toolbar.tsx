@@ -12,8 +12,6 @@ interface ToolbarProps {
   onToggleSidebar: () => void;
 }
 
-const SHOW_AI_FEATURES = false;
-
 const FigmaLogo = () => (
   <svg 
     className="w-4 h-4 flex-shrink-0 overflow-visible" 
@@ -94,16 +92,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </div>
         
         <div className="flex items-center gap-4 lg:gap-5 h-full py-2">
-          {SHOW_AI_FEATURES && (
-            <button 
-              onClick={onOpenAI}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium rounded-full transition-colors flex items-center gap-2 border border-white/5"
-            >
-              <span className="text-indigo-400 text-base">✨</span>
-              <span className="hidden xs:inline">AI Designer</span>
-            </button>
-          )}
-
           <div className="flex items-center gap-3 h-full">
             <div className="relative h-full flex items-center" ref={menuRef}>
               <button 

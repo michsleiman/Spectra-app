@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { ColorSystem, ColorStep, OKLCH, SystemControls, SemanticToken, SystemType, ThemeMode } from '../types';
 import { hexToOklch, oklchToHex } from '../utils/colorUtils';
 import SemanticView from './SemanticView';
@@ -45,13 +45,26 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
   const [format, setFormat] = useState<InputFormat>('oklch');
   const [oklch, setOklch] = useState<OKLCH>({ l: 0.5, c: 0.15, h: 250 });
   const [quickStep, setQuickStep] = useState(500);
+  const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   
   const quickColor = useMemo(() => oklchToHex(oklch), [oklch]);
   const [localHex, setLocalHex] = useState(quickColor);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLocalHex(quickColor);
   }, [quickColor]);
+
+  // Click outside to close swatch menus
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (activeMenuId !== null && menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActiveMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeMenuId]);
 
   const rgb = useMemo(() => {
     const hex = quickColor;
@@ -82,6 +95,12 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
     if (/^#[0-9A-F]{6}$/i.test(formatted)) {
       setOklch(hexToOklch(formatted));
     }
+  };
+
+  const handleEditStep = (step: ColorStep) => {
+    setOklch(step.oklch);
+    setQuickStep(step.id);
+    setActiveMenuId(null);
   };
 
   const driftGradient = useMemo(() => {
@@ -126,7 +145,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
         }`}
       >
         <main className="h-full overflow-y-auto scroll-smooth">
-          {/* DESKTOP HEADER - Removed mb-4 to ensure strict 1.5rem (py-6) spacing around the title */}
           <header className="hidden sm:flex max-w-[1600px] mx-auto mb-0 flex-col md:flex-row md:items-end justify-between gap-4 py-6 px-6 sm:px-12 text-zinc-100">
             <div>
               <div className="flex items-center gap-3">
@@ -140,22 +158,14 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
             </div>
           </header>
 
-          {/* MAIN CONTAINER - Synchronized horizontal padding with toolbar */}
           <div className="max-w-[1600px] mx-auto px-6 sm:px-12 pb-24 lg:pb-12">
-            
-            {/* TOP ROW: Sections align bottoms but internal elements are flexible */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
-              
-              {/* PERCEPTUAL MATRIX SECTION */}
               {!isBaseSystem && (
                 <div className="lg:col-span-3">
                   <div className="bg-zinc-950 sm:rounded-[2rem] p-0 sm:p-8 sm:border sm:border-zinc-800 shadow-2xl relative overflow-hidden group flex flex-col h-full">
                     <div className="relative z-10 grid grid-cols-1 xl:grid-cols-12 xl:gap-10 flex-1">
-                      
-                      {/* COLOR PREVIEW HUD COLUMN */}
                       <div className="xl:col-span-4 sticky top-0 z-30 sm:relative sm:top-auto px-0 sm:px-0 flex flex-col h-full">
                         <div className="bg-zinc-950/90 backdrop-blur-3xl border-b border-zinc-800/50 sm:border-0 p-4 sm:p-0 flex flex-col flex-1">
-                           {/* Mobile Header Context */}
                            <div className="flex items-center justify-between mb-4 sm:hidden px-2">
                               <div className="flex items-center gap-2">
                                  <div className="w-1.5 h-4 bg-indigo-500 rounded-full" />
@@ -163,8 +173,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                               </div>
                               {isSynced && <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Synced</span>}
                            </div>
-
-                           {/* CLEAN COLOR PREVIEW - FLEX-1 TO ABSORB SURPLUS HEIGHT FROM SIDEBAR */}
                            <div 
                              className="w-full min-h-[128px] xl:flex-1 rounded-[2rem] sm:rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500"
                              style={{ backgroundColor: quickColor }}
@@ -176,8 +184,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                               </div>
                            </div>
                         </div>
-
-                        {/* ANCHOR SELECTOR - HUGS BOTTOM. Enforced 48px (h-12) */}
                         <div className="hidden xl:block mt-8 w-full space-y-3 px-2">
                             <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] ml-1 block">Anchor Step</label>
                             <div className="flex items-center gap-2">
@@ -202,7 +208,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         </div>
                       </div>
 
-                      {/* SLIDERS SECTION */}
                       <div className="xl:col-span-8 px-6 pt-12 pb-6 sm:p-0 space-y-4 sm:space-y-6">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                           <div className="space-y-1">
@@ -230,7 +235,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                 <ControlSliderRaw label="Hue" val={oklch.h} max={360} step={1} gradient={hGradient} onChange={v => handleOklchChange('h', v)} />
                               </div>
                             )}
-
                             {format === 'rgb' && (
                               <div key="rgb-view" className="space-y-4 sm:space-y-6 animate-[fade-in-slide-down_0.2s_ease-out]">
                                 <ControlSliderRaw label="Red" val={rgb.r} max={255} step={1} gradient={rGradient} onChange={v => handleRgbChange('r', v)} />
@@ -238,7 +242,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                 <ControlSliderRaw label="Blue" val={rgb.b} max={255} step={1} gradient={bGradient} onChange={v => handleRgbChange('b', v)} />
                               </div>
                             )}
-
                             {format === 'hex' && (
                               <div key="hex-view" className="flex flex-col gap-6 animate-[fade-in-slide-down_0.2s_ease-out]">
                                 <label className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em] ml-2">HEX Literal</label>
@@ -257,7 +260,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                           </div>
                         </div>
 
-                        {/* MOBILE COMMIT ACTIONS - Enforced 48px (h-12) */}
                         <div className="xl:hidden pt-2 border-t border-zinc-900/50">
                             <div className="flex items-center gap-3">
                               <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center px-4 h-12">
@@ -286,15 +288,12 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                 </div>
               )}
 
-              {/* SCALE ADJUSTMENT SECTION (SIDEBAR CARD) */}
               {!isBaseSystem && (
                 <div className="lg:col-span-1">
                   <div className="bg-zinc-950 rounded-[2rem] p-8 border border-zinc-800 shadow-xl flex flex-col h-full">
                     <div className="flex items-center justify-between mb-10">
                       <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">SCALE ADJUSTMENT</h3>
                     </div>
-
-                    {/* space-y-8 provides the 32px gap requested */}
                     <div className="space-y-8 flex-1 flex flex-col justify-start">
                       <ControlSlider label="Luminance Punch" value={system.controls.punch} onChange={v => onUpdateControls({...system.controls, punch: v})} />
                       <ControlSlider label="Atmospheric Drift" value={(system.controls.hueRotation + 60) / 120} gradient={driftGradient} onChange={v => onUpdateControls({...system.controls, hueRotation: (v * 120) - 60})} />
@@ -306,7 +305,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
               )}
             </div>
 
-            {/* PALETTE PREVIEW SECTION (BELOW TOP ROW) - Rounded corners updated to rounded-xl */}
             <div className="space-y-4 mt-8">
                <div className="flex items-center justify-between px-1">
                   <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Color Palette</h3>
@@ -323,31 +321,73 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                     </button>
                   )}
                </div>
-               <div className="flex w-full rounded-xl overflow-x-auto lg:overflow-hidden shadow-2xl border border-white/5 scrollbar-hide bg-zinc-950">
+               <div className="flex w-full rounded-xl overflow-x-auto lg:overflow-hidden shadow-2xl border border-white/5 bg-zinc-950">
                   <div className="flex min-w-full lg:min-w-0 flex-1">
                   {system.steps.map((step) => {
                     const isImmutable = isBaseSystem;
                     const contrastTextColor = step.contrastOnBlack > step.contrastOnWhite ? 'text-black' : 'text-white';
+                    const isMenuOpen = activeMenuId === step.id;
                     
                     return (
                       <div 
                         key={step.id} 
-                        className={`group relative flex-1 min-w-[100px] lg:min-w-0 h-48 lg:h-64 transition-all ${isImmutable ? 'cursor-default' : 'cursor-pointer hover:lg:z-10'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
+                        className={`group relative flex-1 min-w-[100px] lg:min-w-0 h-48 lg:h-64 transition-all ${isImmutable ? 'cursor-default' : 'cursor-default'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
                         style={{ backgroundColor: step.hex }}
-                        onClick={() => {
-                          if (isImmutable) return;
-                          if (step.isLocked) onUnlockStep(step.id);
-                          else onLockStep(step.id, step.hex);
-                        }}
                       >
                          <div className={`absolute inset-0 flex flex-col justify-between p-4 pointer-events-none`}>
-                            <div className="flex justify-between items-start">
+                            <div className="flex justify-between items-start pointer-events-auto relative">
                               <span className={`text-[11px] font-black tracking-tighter ${contrastTextColor}`}>{step.id}</span>
+                              
                               {!isImmutable && (
-                                <div className={`flex items-center justify-center translate-x-1 -translate-y-1 ${contrastTextColor} transition-opacity duration-200 ${step.isLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}>
-                                  <svg className="w-4 h-4 drop-shadow-sm overflow-visible" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                  </svg>
+                                <div className="relative" ref={isMenuOpen ? menuRef : null}>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMenuId(isMenuOpen ? null : step.id);
+                                    }}
+                                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                                      isMenuOpen 
+                                        ? 'bg-white/30 backdrop-blur-md opacity-100' 
+                                        : 'bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100'
+                                    } ${contrastTextColor}`}
+                                  >
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                    </svg>
+                                  </button>
+
+                                  {isMenuOpen && (
+                                    <div className="absolute top-full right-0 mt-2 min-w-[140px] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                                      <div className="p-1.5 flex flex-col">
+                                        <button 
+                                          onClick={() => handleEditStep(step)}
+                                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
+                                        >
+                                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                          </svg>
+                                          <span className="text-[10px] font-black uppercase tracking-widest">Edit</span>
+                                        </button>
+                                        <button 
+                                          onClick={() => {
+                                            if (step.isLocked) onUnlockStep(step.id);
+                                            else onLockStep(step.id, step.hex);
+                                            setActiveMenuId(null);
+                                          }}
+                                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
+                                        >
+                                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                            {step.isLocked ? (
+                                              <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.367zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+                                            ) : (
+                                              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                            )}
+                                          </svg>
+                                          <span className="text-[10px] font-black uppercase tracking-widest">{step.isLocked ? 'Unlock' : 'Lock'}</span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -373,7 +413,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                </div>
             </div>
 
-            {/* BASE NEUTRALS SPECIAL VIEW */}
             {isBaseSystem && (
               <div className="bg-zinc-950 sm:rounded-[2rem] p-8 sm:p-20 sm:border sm:border-zinc-800 flex flex-col items-center text-center mt-8 text-zinc-100">
                 <div className="max-w-md space-y-6">
@@ -391,11 +430,9 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                 </div>
               </div>
             )}
-
           </div>
         </main>
       </div>
-
       <div className={`absolute inset-0 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${viewMode === 'semantics' ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12 pointer-events-none'}`}>
         <SemanticView semantics={semantics} systems={allSystems} theme={theme} onToggleTheme={onToggleTheme} onUpdate={onUpdateSemantic} onAddSemantic={onAddSemantic} onDeleteSemantic={onDeleteSemantic} />
       </div>

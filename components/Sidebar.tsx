@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ColorSystem, SystemType } from '../types';
 
@@ -11,6 +10,7 @@ interface SidebarProps {
   onUpdateSystemName: (id: string, name: string) => void;
   syncCurves: boolean;
   onToggleSync: () => void;
+  onOpenAI: () => void;
   onCloseMobile?: () => void;
 }
 
@@ -23,6 +23,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onUpdateSystemName,
   syncCurves,
   onToggleSync,
+  onOpenAI,
   onCloseMobile
 }) => {
   const [isAdding, setIsAdding] = useState(false);
@@ -203,7 +204,24 @@ const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
 
-        <div className="mt-6 pt-4 border-t border-zinc-900/50 mx-2">
+        {/* SUBTLE AI PARTNER ACTION */}
+        <div className="mt-4 mx-2">
+           <button 
+             onClick={onOpenAI}
+             className="w-full flex items-center gap-3 px-3 py-3 border border-dashed border-zinc-800 hover:border-indigo-500/50 hover:bg-indigo-500/5 rounded-xl transition-all group"
+           >
+              <div className="w-3 h-3 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                 <svg className="w-full h-full" fill="currentColor" viewBox="0 0 24 24">
+                   <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" />
+                 </svg>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-indigo-400 transition-colors">
+                Generate with AI
+              </span>
+           </button>
+        </div>
+
+        <div className="mt-8 pt-4 border-t border-zinc-900/50 mx-2">
           <div 
             onClick={onToggleSync}
             className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${syncCurves ? 'bg-indigo-600/10 border-indigo-500/30' : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-700'}`}

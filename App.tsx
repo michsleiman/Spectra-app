@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { ColorSystem, Palette, SystemType, SystemControls, AIResponse, SemanticToken, ThemeMode } from './types';
 import { generateScale } from './utils/interpolation';
@@ -393,6 +392,7 @@ const App: React.FC = () => {
           onDeleteSystem={handleDeleteSystem}
           syncCurves={syncCurves}
           onToggleSync={() => setSyncCurves(!syncCurves)}
+          onOpenAI={() => setIsAIModalOpen(true)}
           onAddSystem={(name, type, hex) => {
             const id = Math.random().toString(36).substr(2, 9);
             const newSys = createSystem(id, name, type, hexToOklch(hex).h, hexToOklch(hex).c);
