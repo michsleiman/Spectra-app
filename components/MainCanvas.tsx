@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { ColorSystem, ColorStep, OKLCH, SystemControls, SemanticToken, SystemType, ThemeMode } from '../types';
 import { hexToOklch, oklchToHex } from '../utils/colorUtils';
@@ -127,8 +126,8 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
         }`}
       >
         <main className="h-full overflow-y-auto scroll-smooth">
-          {/* DESKTOP HEADER */}
-          <header className="hidden sm:flex max-w-[1600px] mx-auto mb-8 flex-col md:flex-row md:items-end justify-between gap-4 p-6 sm:px-12 pt-12">
+          {/* DESKTOP HEADER - Adjusted padding to exactly 1.5rem top/bottom (py-6) */}
+          <header className="hidden sm:flex max-w-[1600px] mx-auto mb-4 flex-col md:flex-row md:items-end justify-between gap-4 py-6 px-6 sm:px-12">
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-white">{system.name}</h1>
@@ -141,238 +140,257 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
             </div>
           </header>
 
-          <div className="max-w-[1600px] mx-auto canvas-layout-container sm:px-4 lg:px-12 pb-24 lg:pb-12">
-            <div className="canvas-layout-main space-y-0 sm:space-y-6">
+          <div className="max-w-[1600px] mx-auto sm:px-4 lg:px-12 pb-24 lg:pb-12">
+            
+            {/* TOP ROW: Sections align bottoms but internal elements are flexible */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
+              
+              {/* PERCEPTUAL MATRIX SECTION */}
               {!isBaseSystem && (
-                <div className="bg-zinc-950 sm:rounded-[2rem] p-0 sm:p-8 sm:border sm:border-zinc-800 shadow-2xl relative overflow-hidden group">
-                  <div className="relative z-10 grid grid-cols-1 xl:grid-cols-12 xl:gap-10">
-                    
-                    {/* COLOR PREVIEW HUD */}
-                    <div className="xl:col-span-4 sticky top-0 z-30 sm:relative sm:top-auto px-0 sm:px-0">
-                      <div className="bg-zinc-950/90 backdrop-blur-3xl border-b border-zinc-800/50 sm:border-0 p-4 sm:p-0">
-                         {/* Mobile Header Context */}
-                         <div className="flex items-center justify-between mb-4 sm:hidden px-2">
-                            <div className="flex items-center gap-2">
-                               <div className="w-1.5 h-4 bg-indigo-500 rounded-full" />
-                               <span className="text-xs font-black uppercase tracking-widest text-white">{system.name}</span>
-                            </div>
-                            {isSynced && <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Synced</span>}
-                         </div>
-
-                         {/* CLEAN COLOR PREVIEW - No internal gradients or shadows */}
-                         <div 
-                           className="w-full h-32 sm:aspect-square rounded-[2rem] sm:rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500"
-                           style={{ backgroundColor: quickColor }}
-                         >
-                            <div className="relative z-10 flex flex-col items-center gap-2">
-                               <span className={`font-mono font-black text-sm lg:text-xl select-all px-4 py-2 rounded-xl backdrop-blur-sm border border-black/5 transition-all ${oklch.l > 0.5 ? 'bg-black/5 text-black' : 'bg-white/10 text-white'}`}>
-                                 {quickColor}
-                               </span>
-                            </div>
-                         </div>
-                      </div>
-
-                      {/* DESKTOP ONLY COMMIT ACTIONS */}
-                      <div className="hidden xl:block mt-10 w-full space-y-3 px-2">
-                          <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] ml-1 block">Anchor Step</label>
-                          <div className="flex items-center gap-2">
-                            <div className="relative flex-1">
-                              <select 
-                                value={quickStep}
-                                onChange={(e) => setQuickStep(parseInt(e.target.value))}
-                                className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3.5 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all appearance-none text-center"
-                              >
-                                {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(s => (
-                                  <option key={s} value={s}>{s}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <button 
-                              onClick={() => onLockStep(quickStep, quickColor, true)}
-                              className="flex-[1.5] bg-indigo-600 hover:bg-indigo-500 text-white py-3.5 rounded-2xl font-black text-[10px] lg:text-xs uppercase tracking-[0.2em] shadow-md shadow-indigo-600/10 active:scale-[0.97] transition-all whitespace-nowrap"
-                            >
-                              Update System
-                            </button>
-                          </div>
-                      </div>
-                    </div>
-
-                    {/* PERCEPTUAL MATRIX SLIDERS */}
-                    <div className="xl:col-span-8 px-6 pt-12 pb-6 sm:p-0 space-y-4 sm:space-y-6">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-                        <div className="space-y-1">
-                          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Perceptual Matrix</h3>
-                        </div>
-                        <div className="flex bg-zinc-900/50 rounded-2xl p-1 border border-zinc-800/50 w-full sm:w-auto">
-                          {['oklch', 'rgb', 'hex'].map((f) => (
-                            <button
-                              key={f}
-                              onClick={() => setFormat(f as any)}
-                              className={`flex-1 sm:flex-none px-5 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${format === f ? 'bg-zinc-800 text-indigo-400 shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-400'}`}
-                            >
-                              {f}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="relative">
-                        <div className="min-h-[130px] sm:min-h-[150px]">
-                          {format === 'oklch' && (
-                            <div key="oklch-view" className="space-y-3 sm:space-y-4 animate-[fade-in-slide-down_0.2s_ease-out]">
-                              <ControlSliderRaw label="Lightness" val={oklch.l} max={1} step={0.001} gradient={lGradient} onChange={v => handleOklchChange('l', v)} />
-                              <ControlSliderRaw label="Chroma" val={oklch.c} max={0.4} step={0.001} gradient={cGradient} onChange={v => handleOklchChange('c', v)} />
-                              <ControlSliderRaw label="Hue" val={oklch.h} max={360} step={1} gradient={hGradient} onChange={v => handleOklchChange('h', v)} />
-                            </div>
-                          )}
-
-                          {format === 'rgb' && (
-                            <div key="rgb-view" className="space-y-3 sm:space-y-4 animate-[fade-in-slide-down_0.2s_ease-out]">
-                              <ControlSliderRaw label="Red" val={rgb.r} max={255} step={1} gradient={rGradient} onChange={v => handleRgbChange('r', v)} />
-                              <ControlSliderRaw label="Green" val={rgb.g} max={255} step={1} gradient={gGradient} onChange={v => handleRgbChange('g', v)} />
-                              <ControlSliderRaw label="Blue" val={rgb.b} max={255} step={1} gradient={bGradient} onChange={v => handleRgbChange('b', v)} />
-                            </div>
-                          )}
-
-                          {format === 'hex' && (
-                            <div key="hex-view" className="flex flex-col gap-6 animate-[fade-in-slide-down_0.2s_ease-out]">
-                              <label className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em] ml-2">HEX Literal</label>
-                              <div className="relative group">
-                                <input 
-                                  type="text" 
-                                  value={localHex} 
-                                  onChange={(e) => handleLocalHexChange(e.target.value)}
-                                  maxLength={7}
-                                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-8 lg:p-10 text-3xl lg:text-4xl font-mono font-black text-white text-center focus:outline-none focus:ring-4 focus:ring-indigo-600/20 uppercase tracking-tighter transition-all"
-                                />
-                                <div className="absolute inset-0 rounded-[2rem] border border-white/5 pointer-events-none" />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* MOBILE COMMIT ACTIONS */}
-                      <div className="xl:hidden pt-2 border-t border-zinc-900/50">
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center px-4 h-14">
-                               <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mr-2">Step</span>
-                               <select 
-                                 value={quickStep}
-                                 onChange={(e) => setQuickStep(parseInt(e.target.value))}
-                                 className="flex-1 bg-transparent text-sm font-bold text-white focus:outline-none appearance-none text-center"
-                               >
-                                 {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(s => (
-                                   <option key={s} value={s}>{s}</option>
-                                 ))}
-                               </select>
-                            </div>
-                            <button 
-                              onClick={() => onLockStep(quickStep, quickColor, true)}
-                              className="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-white h-14 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-md shadow-indigo-600/10 active:scale-[0.98] transition-all"
-                            >
-                              Sync Scale
-                            </button>
-                          </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* SCALE PREVIEW SECTION */}
-              <div className="space-y-4 px-6 sm:px-0 mt-4 sm:mt-0">
-                 <div className="flex items-center justify-between px-1">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Color Palette</h3>
-                    {!isBaseSystem && (
-                      <button 
-                        onClick={onToggleLockAll}
-                        className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                          allLocked 
-                            ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.1)]' 
-                            : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700'
-                        }`}
-                      >
-                        {allLocked ? 'Unlock All' : 'Lock All'}
-                      </button>
-                    )}
-                 </div>
-                 <div className="flex w-full rounded-[2rem] overflow-x-auto lg:overflow-hidden shadow-2xl border border-white/5 scrollbar-hide bg-zinc-950">
-                    <div className="flex min-w-full lg:min-w-0 flex-1">
-                    {system.steps.map((step) => {
-                      const isImmutable = isBaseSystem;
-                      const contrastTextColor = step.contrastOnBlack > step.contrastOnWhite ? 'text-black' : 'text-white';
+                <div className="lg:col-span-3">
+                  <div className="bg-zinc-950 sm:rounded-[2rem] p-0 sm:p-8 sm:border sm:border-zinc-800 shadow-2xl relative overflow-hidden group flex flex-col h-full">
+                    <div className="relative z-10 grid grid-cols-1 xl:grid-cols-12 xl:gap-10 flex-1">
                       
-                      return (
-                        <div 
-                          key={step.id} 
-                          className={`group relative flex-1 min-w-[100px] lg:min-w-0 h-48 lg:h-64 transition-all ${isImmutable ? 'cursor-default' : 'cursor-pointer hover:lg:z-10'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
-                          style={{ backgroundColor: step.hex }}
-                          onClick={() => {
-                            if (isImmutable) return;
-                            if (step.isLocked) onUnlockStep(step.id);
-                            else onLockStep(step.id, step.hex);
-                          }}
-                        >
-                           <div className={`absolute inset-0 flex flex-col justify-between p-4 pointer-events-none`}>
-                              <div className="flex justify-between items-start">
-                                <span className={`text-[11px] font-black tracking-tighter ${contrastTextColor}`}>{step.id}</span>
-                                {!isImmutable && (
-                                  <div className={`flex items-center justify-center translate-x-1 -translate-y-1 ${contrastTextColor} transition-opacity duration-200 ${step.isLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}>
-                                    <svg className="w-4 h-4 drop-shadow-sm overflow-visible" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                    </svg>
-                                  </div>
-                                )}
+                      {/* COLOR PREVIEW HUD COLUMN */}
+                      <div className="xl:col-span-4 sticky top-0 z-30 sm:relative sm:top-auto px-0 sm:px-0 flex flex-col h-full">
+                        <div className="bg-zinc-950/90 backdrop-blur-3xl border-b border-zinc-800/50 sm:border-0 p-4 sm:p-0 flex flex-col flex-1">
+                           {/* Mobile Header Context */}
+                           <div className="flex items-center justify-between mb-4 sm:hidden px-2">
+                              <div className="flex items-center gap-2">
+                                 <div className="w-1.5 h-4 bg-indigo-500 rounded-full" />
+                                 <span className="text-xs font-black uppercase tracking-widest text-white">{system.name}</span>
                               </div>
-                              
-                              <div className="space-y-3">
-                                <div className={`flex flex-col gap-1.5 leading-none opacity-80 ${contrastTextColor}`}>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[11px] font-black">W</span>
-                                    <span className="text-[11px] font-mono font-black">{step.contrastOnWhite.toFixed(1)}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[11px] font-black">B</span>
-                                    <span className="text-[11px] font-mono font-black">{step.contrastOnBlack.toFixed(1)}</span>
-                                  </div>
-                                </div>
-                                <span className={`text-[10px] font-mono font-black break-all uppercase tracking-tighter ${contrastTextColor}`}>{step.hex}</span>
+                              {isSynced && <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Synced</span>}
+                           </div>
+
+                           {/* CLEAN COLOR PREVIEW - FLEX-1 TO ABSORB SURPLUS HEIGHT FROM SIDEBAR */}
+                           <div 
+                             className="w-full min-h-[128px] xl:flex-1 rounded-[2rem] sm:rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500"
+                             style={{ backgroundColor: quickColor }}
+                           >
+                              <div className="relative z-10 flex flex-col items-center gap-2">
+                                 <span className={`font-mono font-black text-sm lg:text-xl select-all transition-all tracking-widest ${oklch.l > 0.5 ? 'text-black' : 'text-white'}`}>
+                                   {quickColor}
+                                 </span>
                               </div>
                            </div>
                         </div>
-                      );
-                    })}
-                    </div>
-                 </div>
-              </div>
-            </div>
 
-            <div className="canvas-layout-side space-y-6 px-6 sm:px-0 mt-8 lg:mt-0">
-              {!isBaseSystem && (
-                <div className="bg-zinc-950 rounded-[2rem] p-8 border border-zinc-800 shadow-xl space-y-10">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Scale Geometry</h3>
-                  </div>
-
-                  <div className="space-y-6 sm:space-y-8">
-                    <ControlSlider label="Luminance Punch" value={system.controls.punch} onChange={v => onUpdateControls({...system.controls, punch: v})} />
-                    <ControlSlider label="Atmospheric Drift" value={(system.controls.hueRotation + 60) / 120} gradient={driftGradient} onChange={v => onUpdateControls({...system.controls, hueRotation: (v * 120) - 60})} />
-                    <ControlSlider label="Curve Steepness" value={system.controls.steepness} onChange={v => onUpdateControls({...system.controls, steepness: v})} />
-                    <ControlSlider label="Black Point" value={system.controls.darkness} onChange={v => onUpdateControls({...system.controls, darkness: v})} />
-                  </div>
-
-                  <div className="pt-8 border-t border-zinc-800/50">
-                    <div className="flex items-center justify-between p-5 bg-zinc-900/40 rounded-2xl border border-zinc-800/30">
-                        <p className="text-[11px] font-black text-zinc-100 uppercase tracking-[0.2em]">WCAG Enforcement</p>
-                        <div onClick={() => onUpdateControls({...system.controls, accessibilitySafe: !system.controls.accessibilitySafe})} className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${system.controls.accessibilitySafe ? 'bg-indigo-600 shadow-[0_0_15px_rgba(99,102,241,0.4)]' : 'bg-zinc-800'}`}>
-                          <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${system.controls.accessibilitySafe ? 'translate-x-6' : 'translate-x-0'}`} />
+                        {/* ANCHOR SELECTOR - HUGS BOTTOM. Enforced 48px (h-12) */}
+                        <div className="hidden xl:block mt-8 w-full space-y-3 px-2">
+                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] ml-1 block">Anchor Step</label>
+                            <div className="flex items-center gap-2">
+                              <div className="relative flex-1 h-12">
+                                <select 
+                                  value={quickStep}
+                                  onChange={(e) => setQuickStep(parseInt(e.target.value))}
+                                  className="w-full h-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all appearance-none text-center"
+                                >
+                                  {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(s => (
+                                    <option key={s} value={s}>{s}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <button 
+                                onClick={() => onLockStep(quickStep, quickColor, true)}
+                                className="flex-[1.5] h-12 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-[10px] lg:text-xs uppercase tracking-[0.2em] shadow-md shadow-indigo-600/10 active:scale-[0.97] transition-all whitespace-nowrap"
+                              >
+                                Update
+                              </button>
+                            </div>
                         </div>
+                      </div>
+
+                      {/* SLIDERS SECTION */}
+                      <div className="xl:col-span-8 px-6 pt-12 pb-6 sm:p-0 space-y-4 sm:space-y-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                          <div className="space-y-1">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Perceptual Matrix</h3>
+                          </div>
+                          <div className="flex bg-zinc-900/50 rounded-2xl p-1 border border-zinc-800/50 w-full sm:w-auto">
+                            {['oklch', 'rgb', 'hex'].map((f) => (
+                              <button
+                                key={f}
+                                onClick={() => setFormat(f as any)}
+                                className={`flex-1 sm:flex-none px-5 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${format === f ? 'bg-zinc-800 text-indigo-400 shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-400'}`}
+                              >
+                                {f}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="relative">
+                          <div className="min-h-[130px] sm:min-h-[150px]">
+                            {format === 'oklch' && (
+                              <div key="oklch-view" className="space-y-4 sm:space-y-6 animate-[fade-in-slide-down_0.2s_ease-out]">
+                                <ControlSliderRaw label="Lightness" val={oklch.l} max={1} step={0.001} gradient={lGradient} onChange={v => handleOklchChange('l', v)} />
+                                <ControlSliderRaw label="Chroma" val={oklch.c} max={0.4} step={0.001} gradient={cGradient} onChange={v => handleOklchChange('c', v)} />
+                                <ControlSliderRaw label="Hue" val={oklch.h} max={360} step={1} gradient={hGradient} onChange={v => handleOklchChange('h', v)} />
+                              </div>
+                            )}
+
+                            {format === 'rgb' && (
+                              <div key="rgb-view" className="space-y-4 sm:space-y-6 animate-[fade-in-slide-down_0.2s_ease-out]">
+                                <ControlSliderRaw label="Red" val={rgb.r} max={255} step={1} gradient={rGradient} onChange={v => handleRgbChange('r', v)} />
+                                <ControlSliderRaw label="Green" val={rgb.g} max={255} step={1} gradient={gGradient} onChange={v => handleRgbChange('g', v)} />
+                                <ControlSliderRaw label="Blue" val={rgb.b} max={255} step={1} gradient={bGradient} onChange={v => handleRgbChange('b', v)} />
+                              </div>
+                            )}
+
+                            {format === 'hex' && (
+                              <div key="hex-view" className="flex flex-col gap-6 animate-[fade-in-slide-down_0.2s_ease-out]">
+                                <label className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em] ml-2">HEX Literal</label>
+                                <div className="relative group">
+                                  <input 
+                                    type="text" 
+                                    value={localHex} 
+                                    onChange={(e) => handleLocalHexChange(e.target.value)}
+                                    maxLength={7}
+                                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-8 lg:p-10 text-3xl lg:text-4xl font-mono font-black text-white text-center focus:outline-none focus:ring-4 focus:ring-indigo-600/20 uppercase tracking-tighter transition-all"
+                                  />
+                                  <div className="absolute inset-0 rounded-[2rem] border border-white/5 pointer-events-none" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* MOBILE COMMIT ACTIONS - Enforced 48px (h-12) */}
+                        <div className="xl:hidden pt-2 border-t border-zinc-900/50">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center px-4 h-12">
+                                 <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mr-2">Step</span>
+                                 <select 
+                                   value={quickStep}
+                                   onChange={(e) => setQuickStep(parseInt(e.target.value))}
+                                   className="flex-1 bg-transparent text-sm font-bold text-white focus:outline-none appearance-none text-center"
+                                 >
+                                   {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(s => (
+                                     <option key={s} value={s}>{s}</option>
+                                   ))}
+                                 </select>
+                              </div>
+                              <button 
+                                onClick={() => onLockStep(quickStep, quickColor, true)}
+                                className="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-white h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-md shadow-indigo-600/10 active:scale-[0.98] transition-all"
+                              >
+                                Update
+                              </button>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SCALE ADJUSTMENT SECTION (SIDEBAR CARD) */}
+              {!isBaseSystem && (
+                <div className="lg:col-span-1">
+                  <div className="bg-zinc-950 rounded-[2rem] p-8 border border-zinc-800 shadow-xl flex flex-col h-full">
+                    <div className="flex items-center justify-between mb-10">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">SCALE ADJUSTMENT</h3>
+                    </div>
+
+                    {/* space-y-8 provides the 32px gap requested */}
+                    <div className="space-y-8 flex-1 flex flex-col justify-start">
+                      <ControlSlider label="Luminance Punch" value={system.controls.punch} onChange={v => onUpdateControls({...system.controls, punch: v})} />
+                      <ControlSlider label="Atmospheric Drift" value={(system.controls.hueRotation + 60) / 120} gradient={driftGradient} onChange={v => onUpdateControls({...system.controls, hueRotation: (v * 120) - 60})} />
+                      <ControlSlider label="Curve Steepness" value={system.controls.steepness} onChange={v => onUpdateControls({...system.controls, steepness: v})} />
+                      <ControlSlider label="Black Point" value={system.controls.darkness} onChange={v => onUpdateControls({...system.controls, darkness: v})} />
                     </div>
                   </div>
                 </div>
               )}
             </div>
+
+            {/* PALETTE PREVIEW SECTION (BELOW TOP ROW) */}
+            <div className="space-y-4 px-6 sm:px-0 mt-8">
+               <div className="flex items-center justify-between px-1">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Color Palette</h3>
+                  {!isBaseSystem && (
+                    <button 
+                      onClick={onToggleLockAll}
+                      className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                        allLocked 
+                          ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.1)]' 
+                          : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                      }`}
+                    >
+                      {allLocked ? 'Unlock All' : 'Lock All'}
+                    </button>
+                  )}
+               </div>
+               <div className="flex w-full rounded-[2rem] overflow-x-auto lg:overflow-hidden shadow-2xl border border-white/5 scrollbar-hide bg-zinc-950">
+                  <div className="flex min-w-full lg:min-w-0 flex-1">
+                  {system.steps.map((step) => {
+                    const isImmutable = isBaseSystem;
+                    const contrastTextColor = step.contrastOnBlack > step.contrastOnWhite ? 'text-black' : 'text-white';
+                    
+                    return (
+                      <div 
+                        key={step.id} 
+                        className={`group relative flex-1 min-w-[100px] lg:min-w-0 h-48 lg:h-64 transition-all ${isImmutable ? 'cursor-default' : 'cursor-pointer hover:lg:z-10'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
+                        style={{ backgroundColor: step.hex }}
+                        onClick={() => {
+                          if (isImmutable) return;
+                          if (step.isLocked) onUnlockStep(step.id);
+                          else onLockStep(step.id, step.hex);
+                        }}
+                      >
+                         <div className={`absolute inset-0 flex flex-col justify-between p-4 pointer-events-none`}>
+                            <div className="flex justify-between items-start">
+                              <span className={`text-[11px] font-black tracking-tighter ${contrastTextColor}`}>{step.id}</span>
+                              {!isImmutable && (
+                                <div className={`flex items-center justify-center translate-x-1 -translate-y-1 ${contrastTextColor} transition-opacity duration-200 ${step.isLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}>
+                                  <svg className="w-4 h-4 drop-shadow-sm overflow-visible" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <div className={`flex flex-col gap-1.5 leading-none opacity-80 ${contrastTextColor}`}>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] font-black">W</span>
+                                  <span className="text-[11px] font-mono font-black">{step.contrastOnWhite.toFixed(1)}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] font-black">B</span>
+                                  <span className="text-[11px] font-mono font-black">{step.contrastOnBlack.toFixed(1)}</span>
+                                </div>
+                              </div>
+                              <span className={`text-[10px] font-mono font-black break-all uppercase tracking-tighter ${contrastTextColor}`}>{step.hex}</span>
+                            </div>
+                         </div>
+                      </div>
+                    );
+                  })}
+                  </div>
+               </div>
+            </div>
+
+            {/* BASE NEUTRALS SPECIAL VIEW */}
+            {isBaseSystem && (
+              <div className="bg-zinc-950 sm:rounded-[2rem] p-8 sm:p-20 sm:border sm:border-zinc-800 flex flex-col items-center text-center mt-8">
+                <div className="max-w-md space-y-6">
+                   <div className="w-16 h-1 bg-zinc-800 mx-auto rounded-full" />
+                   <h2 className="text-2xl font-black text-white">Base Neutrals</h2>
+                   <p className="text-zinc-500 text-sm leading-relaxed">Immutable fundamental black and white steps used for pure UI layering and absolute contrast boundaries.</p>
+                   <div className="flex justify-center gap-6 pt-6">
+                      {system.steps.map(s => (
+                        <div key={s.id} className="space-y-3">
+                           <div className="w-24 h-32 rounded-3xl shadow-2xl border border-white/5" style={{ backgroundColor: s.hex }} />
+                           <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600">{s.usage}</p>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+              </div>
+            )}
+
           </div>
         </main>
       </div>
