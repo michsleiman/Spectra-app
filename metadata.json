@@ -1,5 +1,5 @@
 {
   "name": "Spectra",
-  "description": "A high-end AI-powered color system generator for design systems using the OKLCH perceptual color space. Generate production-ready, accessible color scales with advanced anchoring and designer-centric controls.",
+  "description": "A high-end color system generator using OKLCH perceptual color space. Currently in private beta. Request access to join the waitlist for AI-powered palette generation.",
   "requestFramePermissions": []
 }
