@@ -239,7 +239,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       <div className="p-4 bg-zinc-950/20 border-t border-zinc-900/50">
         <p className="text-[10px] text-zinc-700 font-medium uppercase tracking-widest text-center">
-          A product by <a href="https://www.michelsleiman.com/" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300 transition-colors">Michel Sleiman</a>
+          SPECTRA BY <a href="https://www.michelsleiman.com/" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300 transition-colors">Michel Sleiman</a>
         </p>
       </div>
     </div>
