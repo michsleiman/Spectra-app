@@ -328,7 +328,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                     return (
                       <div 
                         key={step.id} 
-                        className={`group relative h-32 lg:h-64 lg:flex-1 transition-all ${isImmutable ? 'cursor-default' : 'cursor-default'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
+                        className={`group relative h-24 lg:h-52 lg:flex-1 transition-all ${isImmutable ? 'cursor-default' : 'cursor-default'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
                         style={{ backgroundColor: step.hex }}
                       >
                          <div className={`absolute inset-0 flex flex-col justify-between p-3 sm:p-4 pointer-events-none`}>
