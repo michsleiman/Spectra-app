@@ -47,6 +47,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
   const [quickStep, setQuickStep] = useState(500);
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [isHexFocused, setIsHexFocused] = useState(false);
   
   const quickColor = useMemo(() => oklchToHex(oklch), [oklch]);
   const [localHex, setLocalHex] = useState(quickColor);
@@ -189,18 +190,34 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                       <div className="xl:col-span-4 sticky top-0 z-30 sm:relative sm:top-auto flex flex-col h-full">
                         <div className="bg-zinc-950 sm:bg-transparent sm:border-0 p-0 sm:p-0 flex flex-col flex-1">
                            <div 
-                             className="w-full min-h-[140px] xl:flex-1 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500"
+                             className="w-full min-h-[140px] xl:flex-1 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500 group/preview"
                              style={{ backgroundColor: quickColor }}
                            >
-                              <div className="relative z-10 flex flex-col items-center gap-2">
+                              <div className={`relative z-10 flex flex-col items-center transition-all duration-300 ${isHexFocused ? 'scale-105' : ''}`}>
                                  <input 
                                    type="text"
                                    value={localHex}
                                    onChange={(e) => handleLocalHexChange(e.target.value)}
+                                   onFocus={() => setIsHexFocused(true)}
+                                   onBlur={() => setIsHexFocused(false)}
                                    maxLength={7}
-                                   className={`bg-transparent border-none text-center font-mono font-black text-sm lg:text-xl select-all transition-all tracking-widest focus:outline-none focus:ring-0 uppercase w-32 lg:w-48 cursor-text ${oklch.l > 0.5 ? 'text-black' : 'text-white'}`}
+                                   className={`bg-transparent border-2 rounded-2xl text-center font-mono font-black text-sm lg:text-xl select-all transition-all tracking-widest focus:outline-none uppercase w-[8.5rem] lg:w-[11rem] py-2 cursor-text ${
+                                     isHexFocused 
+                                       ? 'border-current bg-current/10 shadow-lg' 
+                                       : 'border-transparent hover:bg-current/5'
+                                   } ${oklch.l > 0.5 ? 'text-black' : 'text-white'}`}
                                    spellCheck={false}
                                  />
+                                 <div className={`absolute -bottom-5 transition-all duration-300 pointer-events-none flex items-center gap-1.5 opacity-0 group-hover/preview:opacity-40 group-focus-within/preview:opacity-40 ${
+                                   isHexFocused ? 'translate-y-0' : 'translate-y-1'
+                                 } ${oklch.l > 0.5 ? 'text-black' : 'text-white'}`}>
+                                   <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                   </svg>
+                                   <span className="text-[9px] font-black uppercase tracking-[0.2em]">
+                                     {isHexFocused ? 'Editing...' : 'Edit Hex'}
+                                   </span>
+                                 </div>
                               </div>
                            </div>
                         </div>
