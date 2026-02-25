@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { ColorSystem, ColorStep, OKLCH, SystemControls, SemanticToken, SystemType, ThemeMode } from '../types';
-import { hexToOklch, oklchToHex } from '../utils/colorUtils';
+import { hexToOklch, oklchToHex, hexToHsl, hslToHex } from '../utils/colorUtils';
 import SemanticView from './SemanticView';
 
 interface MainCanvasProps {
@@ -22,7 +22,7 @@ interface MainCanvasProps {
   isSynced?: boolean;
 }
 
-type InputFormat = 'hex' | 'rgb' | 'oklch';
+type InputFormat = 'hsl' | 'rgb' | 'oklch';
 
 const MainCanvas: React.FC<MainCanvasProps> = ({ 
   viewMode, 
@@ -46,6 +46,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
   const [oklch, setOklch] = useState<OKLCH>({ l: 0.5, c: 0.15, h: 250 });
   const [quickStep, setQuickStep] = useState(500);
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
   
   const quickColor = useMemo(() => oklchToHex(oklch), [oklch]);
   const [localHex, setLocalHex] = useState(quickColor);
@@ -74,6 +75,8 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
     return { r, g, b };
   }, [quickColor]);
 
+  const hsl = useMemo(() => hexToHsl(quickColor), [quickColor]);
+
   const handleOklchChange = (key: keyof OKLCH, val: number) => {
     let n = val;
     if (key === 'l') n = Math.max(0, Math.min(1, val));
@@ -86,6 +89,12 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
     const n = Math.max(0, Math.min(255, val));
     const newRgb = { ...rgb, [key]: n };
     const hex = `#${((1 << 24) + (newRgb.r << 16) + (newRgb.g << 8) + newRgb.b).toString(16).slice(1).toUpperCase()}`;
+    setOklch(hexToOklch(hex));
+  };
+
+  const handleHslChange = (key: 'h' | 's' | 'l', val: number) => {
+    const newHsl = { ...hsl, [key]: val };
+    const hex = hslToHex(newHsl.h, newHsl.s, newHsl.l);
     setOklch(hexToOklch(hex));
   };
 
@@ -133,6 +142,17 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
   const gGradient = useMemo(() => `linear-gradient(to right, rgb(${rgb.r}, 0, ${rgb.b}), rgb(${rgb.r}, 255, ${rgb.b}))`, [rgb.r, rgb.b]);
   const bGradient = useMemo(() => `linear-gradient(to right, rgb(${rgb.r}, ${rgb.g}, 0), rgb(${rgb.r}, ${rgb.g}, 255))`, [rgb.r, rgb.g]);
 
+  const hslHGradient = useMemo(() => {
+    let stops = [];
+    for(let i=0; i<=360; i+=60) {
+      stops.push(hslToHex(i, hsl.s, hsl.l));
+    }
+    return `linear-gradient(to right, ${stops.join(', ')})`;
+  }, [hsl.s, hsl.l]);
+
+  const hslSGradient = useMemo(() => `linear-gradient(to right, ${hslToHex(hsl.h, 0, hsl.l)}, ${hslToHex(hsl.h, 100, hsl.l)})`, [hsl.h, hsl.l]);
+  const hslLGradient = useMemo(() => `linear-gradient(to right, ${hslToHex(hsl.h, hsl.s, 0)}, ${hslToHex(hsl.h, hsl.s, 50)}, ${hslToHex(hsl.h, hsl.s, 100)})`, [hsl.h, hsl.s]);
+
   const isBaseSystem = system.type === 'base';
 
   return (
@@ -173,9 +193,14 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                              style={{ backgroundColor: quickColor }}
                            >
                               <div className="relative z-10 flex flex-col items-center gap-2">
-                                 <span className={`font-mono font-black text-sm lg:text-xl select-all transition-all tracking-widest ${oklch.l > 0.5 ? 'text-black' : 'text-white'}`}>
-                                   {quickColor}
-                                 </span>
+                                 <input 
+                                   type="text"
+                                   value={localHex}
+                                   onChange={(e) => handleLocalHexChange(e.target.value)}
+                                   maxLength={7}
+                                   className={`bg-transparent border-none text-center font-mono font-black text-sm lg:text-xl select-all transition-all tracking-widest focus:outline-none focus:ring-0 uppercase w-32 lg:w-48 cursor-text ${oklch.l > 0.5 ? 'text-black' : 'text-white'}`}
+                                   spellCheck={false}
+                                 />
                               </div>
                            </div>
                         </div>
@@ -210,7 +235,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                             <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Perceptual Matrix</h3>
                           </div>
                           <div className="flex bg-zinc-900/50 rounded-2xl p-1 border border-zinc-800/50 w-full sm:w-auto overflow-hidden">
-                            {['oklch', 'rgb', 'hex'].map((f) => (
+                            {['oklch', 'rgb', 'hsl'].map((f) => (
                               <button
                                 key={f}
                                 onClick={() => setFormat(f as any)}
@@ -238,19 +263,11 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                 <ControlSliderRaw label="Blue" val={rgb.b} max={255} step={1} gradient={bGradient} onChange={v => handleRgbChange('b', v)} />
                               </div>
                             )}
-                            {format === 'hex' && (
-                              <div key="hex-view" className="flex flex-col gap-6 animate-[fade-in-slide-down_0.2s_ease-out]">
-                                <label className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em] ml-2">HEX Literal</label>
-                                <div className="relative group">
-                                  <input 
-                                    type="text" 
-                                    value={localHex} 
-                                    onChange={(e) => handleLocalHexChange(e.target.value)}
-                                    maxLength={7}
-                                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-8 lg:p-10 text-3xl lg:text-4xl font-mono font-black text-white text-center focus:outline-none focus:ring-4 focus:ring-indigo-600/20 uppercase tracking-tighter transition-all"
-                                  />
-                                  <div className="absolute inset-0 rounded-[2rem] border border-white/5 pointer-events-none" />
-                                </div>
+                            {format === 'hsl' && (
+                              <div key="hsl-view" className="space-y-4 sm:space-y-6 animate-[fade-in-slide-down_0.2s_ease-out]">
+                                <ControlSliderRaw label="Hue" val={hsl.h} max={360} step={1} gradient={hslHGradient} onChange={v => handleHslChange('h', v)} />
+                                <ControlSliderRaw label="Saturation" val={hsl.s} max={100} step={1} gradient={hslSGradient} onChange={v => handleHslChange('s', v)} />
+                                <ControlSliderRaw label="Lightness" val={hsl.l} max={100} step={1} gradient={hslLGradient} onChange={v => handleHslChange('l', v)} />
                               </div>
                             )}
                           </div>
@@ -400,7 +417,27 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                   <span className="text-[9px] sm:text-[11px] font-mono font-black">{step.contrastOnBlack.toFixed(1)}</span>
                                 </div>
                               </div>
-                              <span className={`text-[9px] sm:text-[10px] font-mono font-black break-all uppercase tracking-tighter ${contrastTextColor}`}>{step.hex}</span>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigator.clipboard.writeText(step.hex);
+                                  setCopiedId(step.id);
+                                  setTimeout(() => setCopiedId(null), 1500);
+                                }}
+                                className={`flex items-center justify-between w-full px-2 py-1.5 -mx-2 rounded-xl transition-all hover:bg-current/10 active:scale-95 pointer-events-auto group/copy ${contrastTextColor}`}
+                                title="Copy Hex"
+                              >
+                                <span className="text-[11px] sm:text-[13px] font-mono font-black break-all uppercase tracking-tighter">
+                                  {copiedId === step.id ? 'Copied!' : step.hex}
+                                </span>
+                                <svg className={`w-3.5 h-3.5 transition-all ${copiedId === step.id ? 'scale-125 text-emerald-500' : 'opacity-0 group-hover/copy:opacity-100'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  {copiedId === step.id ? (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                  ) : (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  )}
+                                </svg>
+                              </button>
                             </div>
                          </div>
                       </div>
