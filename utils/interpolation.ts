@@ -97,7 +97,12 @@ export function generateScale(system: ColorSystem): ColorStep[] {
     const finalC = c * Math.pow(gamutLimiter, 0.45);
 
     const finalOklch: OKLCH = { l, c: finalC, h };
-    const hex = oklchToHex(finalOklch);
+    let hex = oklchToHex(finalOklch);
+
+    // USER OVERRIDE: Neutral 50 should be #F6F6F6
+    if (system.type === 'neutral' && id === 50) {
+      hex = '#F6F6F6';
+    }
 
     return {
       id,

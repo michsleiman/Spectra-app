@@ -386,6 +386,7 @@ const App: React.FC = () => {
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <Sidebar 
+          viewMode={viewMode}
           systems={systems} 
           activeSystemId={activeSystemId} 
           onSelectSystem={handleSelectSystem}
@@ -402,6 +403,11 @@ const App: React.FC = () => {
           }}
           onUpdateSystemName={(id, name) => setSystems(prev => prev.map(s => s.id === id ? { ...s, name } : s))}
           onCloseMobile={() => setIsSidebarOpen(false)}
+          semantics={semantics}
+          theme={theme}
+          onUpdateSemantic={handleUpdateSemantic}
+          onAddSemantic={handleAddSemantic}
+          onDeleteSemantic={handleDeleteSemantic}
         />
       </div>
 

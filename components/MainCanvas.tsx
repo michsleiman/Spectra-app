@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { ColorSystem, ColorStep, OKLCH, SystemControls, SemanticToken, SystemType, ThemeMode } from '../types';
 import { hexToOklch, oklchToHex, hexToHsl, hslToHex } from '../utils/colorUtils';
-import SemanticView from './SemanticView';
+import PlaygroundView from './PlaygroundView';
 
 interface MainCanvasProps {
   viewMode: 'scales' | 'semantics';
@@ -416,6 +416,20 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                           </svg>
                                           <span className="text-[10px] font-black uppercase tracking-widest">{step.isLocked ? 'Unlock' : 'Lock'}</span>
                                         </button>
+                                        <button 
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(step.hex);
+                                            setCopiedId(step.id);
+                                            setTimeout(() => setCopiedId(null), 1500);
+                                            setActiveMenuId(null);
+                                          }}
+                                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
+                                        >
+                                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                          </svg>
+                                          <span className="text-[10px] font-black uppercase tracking-widest">Copy HEX</span>
+                                        </button>
                                       </div>
                                     </div>
                                   )}
@@ -441,19 +455,12 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                   setCopiedId(step.id);
                                   setTimeout(() => setCopiedId(null), 1500);
                                 }}
-                                className={`flex items-center justify-between w-full px-2 py-1.5 -mx-2 rounded-xl transition-all hover:bg-current/10 active:scale-95 pointer-events-auto group/copy ${contrastTextColor}`}
+                                className={`flex items-center justify-start w-fit px-1 py-1 -ml-1 rounded-lg transition-all hover:bg-current/10 active:scale-95 pointer-events-auto group/copy ${contrastTextColor}`}
                                 title="Copy Hex"
                               >
-                                <span className="text-[11px] sm:text-[13px] font-mono font-black break-all uppercase tracking-tighter">
+                                <span className="text-[10px] sm:text-[12px] font-mono font-black whitespace-nowrap uppercase tracking-tighter">
                                   {copiedId === step.id ? 'Copied!' : step.hex}
                                 </span>
-                                <svg className={`w-3.5 h-3.5 transition-all ${copiedId === step.id ? 'scale-125 text-emerald-500' : 'opacity-0 group-hover/copy:opacity-100'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  {copiedId === step.id ? (
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                  ) : (
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                  )}
-                                </svg>
                               </button>
                             </div>
                          </div>
@@ -485,7 +492,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
         </main>
       </div>
       <div className={`absolute inset-0 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${viewMode === 'semantics' ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12 pointer-events-none'}`}>
-        <SemanticView semantics={semantics} systems={allSystems} theme={theme} onToggleTheme={onToggleTheme} onUpdate={onUpdateSemantic} onAddSemantic={onAddSemantic} onDeleteSemantic={onDeleteSemantic} />
+        <PlaygroundView semantics={semantics} theme={theme} onToggleTheme={onToggleTheme} />
       </div>
     </div>
   );
