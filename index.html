@@ -56,6 +56,14 @@
             scrollbar-color: rgba(150, 150, 150, 0.2) transparent;
         }
 
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
         @keyframes fade-in-slide-down {
             from {
                 opacity: 0;

@@ -492,7 +492,15 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
         </main>
       </div>
       <div className={`absolute inset-0 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${viewMode === 'semantics' ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12 pointer-events-none'}`}>
-        <PlaygroundView semantics={semantics} theme={theme} onToggleTheme={onToggleTheme} />
+        <PlaygroundView 
+          semantics={semantics} 
+          theme={theme} 
+          onToggleTheme={onToggleTheme} 
+          allSystems={allSystems}
+          onUpdateSemantic={onUpdateSemantic}
+          onAddSemantic={onAddSemantic}
+          onDeleteSemantic={onDeleteSemantic}
+        />
       </div>
     </div>
   );

@@ -1,11 +1,15 @@
 
 import React, { useState } from 'react';
-import { SemanticToken, ThemeMode } from '../types';
+import { SemanticToken, ThemeMode, ColorSystem, SystemType } from '../types';
 
 interface PlaygroundViewProps {
   semantics: SemanticToken[];
   theme: ThemeMode;
   onToggleTheme: () => void;
+  allSystems: ColorSystem[];
+  onUpdateSemantic: (tokenId: string, systemType: SystemType, stepId: number | 'white' | 'black') => void;
+  onAddSemantic: (token: Partial<SemanticToken>) => void;
+  onDeleteSemantic: (tokenId: string) => void;
 }
 
 type PlaygroundMode = 'normal' | 'loading';
@@ -19,7 +23,7 @@ interface SpecContextType {
 
 const SpecContext = React.createContext<SpecContextType | null>(null);
 
-const SpecWrapper: React.FC<{ children: React.ReactNode; tokens: string[]; className?: string }> = ({ children, tokens, className = "" }) => {
+const SpecWrapper: React.FC<{ children: React.ReactNode; tokens: string[]; className?: string; position?: 'top' | 'bottom' }> = ({ children, tokens, className = "", position = 'top' }) => {
   const context = React.useContext(SpecContext);
   const id = React.useId();
   if (!context) return <>{children}</>;
@@ -35,7 +39,7 @@ const SpecWrapper: React.FC<{ children: React.ReactNode; tokens: string[]; class
     >
       {children}
       {isHovered && (
-        <div className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full z-[9999] pointer-events-none">
+        <div className={`absolute left-1/2 -translate-x-1/2 z-[9999] pointer-events-none ${position === 'top' ? '-top-2 -translate-y-full' : '-bottom-2 translate-y-full'}`}>
           <div className="flex flex-col gap-1 p-1.5 rounded-lg shadow-2xl border animate-in fade-in zoom-in duration-200" style={{ backgroundColor: get('bg-brand'), borderColor: get('border-brand') }}>
             {tokens.map(t => (
               <div key={t} className="flex items-center gap-2 px-1.5 py-0.5 rounded bg-black/20">
@@ -46,14 +50,22 @@ const SpecWrapper: React.FC<{ children: React.ReactNode; tokens: string[]; class
               </div>
             ))}
           </div>
-          <div className="w-2 h-2 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2 border-r border-b" style={{ backgroundColor: get('bg-brand'), borderColor: get('border-brand') }} />
+          <div className={`w-2 h-2 rotate-45 absolute left-1/2 -translate-x-1/2 border-r border-b ${position === 'top' ? '-bottom-1' : '-top-1 rotate-[225deg]'}`} style={{ backgroundColor: get('bg-brand'), borderColor: get('border-brand') }} />
         </div>
       )}
     </div>
   );
 };
 
-const PlaygroundView: React.FC<PlaygroundViewProps> = ({ semantics, theme, onToggleTheme }) => {
+const PlaygroundView: React.FC<PlaygroundViewProps> = ({ 
+  semantics, 
+  theme, 
+  onToggleTheme,
+  allSystems,
+  onUpdateSemantic,
+  onAddSemantic,
+  onDeleteSemantic
+}) => {
   const [mode, setMode] = useState<PlaygroundMode>('normal');
   const [density, setDensity] = useState<DensityMode>('comfortable');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -75,72 +87,85 @@ const PlaygroundView: React.FC<PlaygroundViewProps> = ({ semantics, theme, onTog
       <div className={`w-full h-full overflow-hidden flex flex-col transition-colors duration-500`} style={{ backgroundColor: get('bg-primary') }}>
         
         {/* PLAYGROUND TOOLBAR */}
-        <div className="flex-shrink-0 px-6 py-3 border-b flex items-center justify-between gap-4" style={{ borderColor: get('border-subtle'), backgroundColor: get('bg-secondary') }}>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
+        <div className="flex-shrink-0 px-4 sm:px-6 py-3 border-b flex items-center justify-between gap-4 overflow-x-auto no-scrollbar" style={{ borderColor: get('border-subtle'), backgroundColor: get('bg-secondary') }}>
+          <div className="flex items-center gap-4 sm:gap-6 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <span className="text-[9px] font-black uppercase tracking-widest opacity-40" style={{ color: get('text-primary') }}>Mode</span>
-              <div className="flex p-1 rounded-lg border" style={{ borderColor: get('border-secondary'), backgroundColor: get('bg-primary') }}>
+              <div className="flex p-1 rounded-lg border shrink-0" style={{ borderColor: get('border-secondary'), backgroundColor: get('bg-primary') }}>
                 {(['normal', 'loading'] as const).map(m => (
-                  <SpecWrapper key={m} tokens={mode === m ? ['bg-brand', 'text-on-brand'] : ['text-primary']}>
-                    <button
-                      onClick={() => setMode(m)}
-                      className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center min-h-[24px] ${mode === m ? '' : 'opacity-50 hover:opacity-100'}`}
-                      style={{ 
-                        backgroundColor: mode === m ? get('bg-brand') : 'transparent', 
-                        color: mode === m ? get('text-on-brand') : get('text-primary'),
-                        boxShadow: mode === m ? getShadow(0.2) : 'none'
-                      }}
-                    >
-                      {m}
-                    </button>
-                  </SpecWrapper>
+                  <button
+                    key={m}
+                    onClick={() => setMode(m)}
+                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center min-h-[24px] shrink-0 ${mode === m ? '' : 'opacity-50 hover:opacity-100'}`}
+                    style={{ 
+                      backgroundColor: mode === m ? get('bg-brand') : 'transparent', 
+                      color: mode === m ? get('text-on-brand') : get('text-primary'),
+                      boxShadow: mode === m ? getShadow(0.2) : 'none'
+                    }}
+                  >
+                    {m}
+                  </button>
                 ))}
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <span className="text-[9px] font-black uppercase tracking-widest opacity-40" style={{ color: get('text-primary') }}>Density</span>
-              <div className="flex p-1 rounded-lg border" style={{ borderColor: get('border-secondary'), backgroundColor: get('bg-primary') }}>
+              <div className="flex p-1 rounded-lg border shrink-0" style={{ borderColor: get('border-secondary'), backgroundColor: get('bg-primary') }}>
                 {(['comfortable', 'compact'] as const).map(d => (
-                  <SpecWrapper key={d} tokens={density === d ? ['bg-brand', 'text-on-brand'] : ['text-primary']}>
-                    <button
-                      onClick={() => setDensity(d)}
-                      className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center min-h-[24px] ${density === d ? '' : 'opacity-50 hover:opacity-100'}`}
-                      style={{ 
-                        backgroundColor: density === d ? get('bg-brand') : 'transparent', 
-                        color: density === d ? get('text-on-brand') : get('text-primary'),
-                        boxShadow: density === d ? getShadow(0.2) : 'none'
-                      }}
-                    >
-                      {d}
-                    </button>
-                  </SpecWrapper>
+                  <button
+                    key={d}
+                    onClick={() => setDensity(d)}
+                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center min-h-[24px] shrink-0 ${density === d ? '' : 'opacity-50 hover:opacity-100'}`}
+                    style={{ 
+                      backgroundColor: density === d ? get('bg-brand') : 'transparent', 
+                      color: density === d ? get('text-on-brand') : get('text-primary'),
+                      boxShadow: density === d ? getShadow(0.2) : 'none'
+                    }}
+                  >
+                    {d}
+                  </button>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <SpecWrapper tokens={['bg-tertiary', 'border-secondary', 'text-primary']}>
-              <button 
-                onClick={onToggleTheme}
-                className="flex items-center gap-3 px-4 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95"
-                style={{ backgroundColor: get('bg-tertiary'), borderColor: get('border-secondary'), color: get('text-primary'), boxShadow: getShadow(0.05) }}
-              >
-                {theme === 'light' ? (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Dark Mode</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.95 16.95l.707.707M7.05 7.05l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Light Mode</span>
-                  </>
-                )}
-              </button>
-            </SpecWrapper>
+          <div className="flex items-center gap-4 shrink-0">
+            <button 
+              onClick={onToggleTheme}
+              className="flex items-center gap-3 px-4 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95 shrink-0"
+              style={{ backgroundColor: get('bg-tertiary'), borderColor: get('border-secondary'), color: get('text-primary'), boxShadow: getShadow(0.05) }}
+            >
+              {theme === 'light' ? (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Dark Mode</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.95 16.95l.707.707M7.05 7.05l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Light Mode</span>
+                </>
+              )}
+            </button>
           </div>
+        </div>
+
+        {/* MOBILE TOKENS BAR - Main Attraction */}
+        <div className="lg:hidden flex-shrink-0 px-4 py-3 border-b overflow-x-auto no-scrollbar flex items-center gap-3 bg-zinc-900/20" style={{ borderColor: get('border-subtle') }}>
+          {semantics.filter(s => !s.parent).map(token => (
+            <div 
+              key={token.id} 
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/50 border border-zinc-800/50 shrink-0 transition-all active:scale-95"
+              style={{ boxShadow: getShadow(0.05) }}
+            >
+              <div className="w-2.5 h-2.5 rounded-full border border-white/10" style={{ backgroundColor: token.hex }} />
+              <div className="flex flex-col">
+                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500 leading-none mb-0.5">{token.category}</span>
+                <span className="text-[10px] font-bold text-zinc-200 leading-none">{token.name}</span>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className={`flex-1 overflow-y-auto transition-all duration-500 ${isCompact ? 'p-4' : 'p-8 lg:p-12'}`}>
@@ -149,19 +174,19 @@ const PlaygroundView: React.FC<PlaygroundViewProps> = ({ semantics, theme, onTog
             {/* DASHBOARD HEADER */}
             <header className={`flex flex-col md:flex-row md:items-center justify-between gap-4 border-b ${isCompact ? 'pb-4' : 'pb-8'}`} style={{ borderColor: get('border-subtle') }}>
               <div className={isLoading ? 'animate-pulse' : ''}>
-                <SpecWrapper tokens={['text-primary']}>
+                <SpecWrapper tokens={['text-primary']} position="bottom">
                   <h1 className={`${isCompact ? 'text-xl' : 'text-3xl'} font-black tracking-tight`} style={{ color: get('text-primary') }}>
                     {isLoading ? 'Loading Analytics...' : 'Analytics Overview'}
                   </h1>
                 </SpecWrapper>
-                <SpecWrapper tokens={['text-secondary']}>
+                <SpecWrapper tokens={['text-secondary']} position="bottom">
                   <p className="text-sm" style={{ color: get('text-secondary') }}>
                     {isLoading ? 'Fetching latest data points...' : 'Welcome back, here is what\'s happening today.'}
                   </p>
                 </SpecWrapper>
               </div>
               <div className="flex items-center gap-3">
-                <SpecWrapper tokens={['bg-secondary', 'border-secondary', 'text-primary']}>
+                <SpecWrapper tokens={['bg-secondary', 'border-secondary', 'text-primary']} position="bottom">
                   <button 
                     className={`px-5 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all active:scale-95`} 
                     style={{ backgroundColor: get('bg-secondary'), borderColor: get('border-secondary'), color: get('text-primary'), boxShadow: getShadow(0.05) }}
@@ -169,7 +194,7 @@ const PlaygroundView: React.FC<PlaygroundViewProps> = ({ semantics, theme, onTog
                     Download Report
                   </button>
                 </SpecWrapper>
-                <SpecWrapper tokens={['bg-brand', 'text-on-brand']}>
+                <SpecWrapper tokens={['bg-brand', 'text-on-brand']} position="bottom">
                   <button 
                     className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95`} 
                     style={{ backgroundColor: get('bg-brand'), color: get('text-on-brand'), boxShadow: getShadow(0.2) }}
@@ -289,14 +314,14 @@ const PlaygroundView: React.FC<PlaygroundViewProps> = ({ semantics, theme, onTog
                   </div>
                 </SpecWrapper>
 
-                {/* UPGRADE CARD */}
+                {/* PLAYGROUND INFO CARD */}
                 <SpecWrapper tokens={['bg-brand', 'text-on-brand', 'bg-tertiary', 'text-primary']}>
                   <div className={`rounded-[2.5rem] relative overflow-hidden group cursor-pointer transition-all active:scale-[0.98] ${isCompact ? 'p-6' : 'p-8'}`} style={{ backgroundColor: get('bg-brand'), boxShadow: getShadow(0.3) }}>
                     <div className="absolute top-0 right-0 w-48 h-48 rounded-full -translate-y-24 translate-x-24 blur-3xl group-hover:scale-125 transition-transform duration-1000" style={{ backgroundColor: get('bg-tertiary'), opacity: 0.1 }} />
                     <div className="relative z-10 space-y-4">
-                      <h3 className="text-xl font-black leading-tight" style={{ color: get('text-on-brand') }}>Unlock Pro Features</h3>
-                      <p className="text-xs opacity-80" style={{ color: get('text-on-brand') }}>Get advanced analytics, unlimited projects, and priority support.</p>
-                      <button className="w-full py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-colors" style={{ backgroundColor: get('bg-tertiary'), color: get('text-primary'), boxShadow: getShadow(0.2) }}>Upgrade Now</button>
+                      <h3 className="text-xl font-black leading-tight" style={{ color: get('text-on-brand') }}>Test Your System</h3>
+                      <p className="text-xs opacity-80" style={{ color: get('text-on-brand') }}>This interactive playground uses your semantic tokens in real-time. Change your mappings to see the UI adapt instantly.</p>
+                      <button className="w-full py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-colors" style={{ backgroundColor: get('bg-tertiary'), color: get('text-primary'), boxShadow: getShadow(0.2) }}>Explore Components</button>
                     </div>
                   </div>
                 </SpecWrapper>

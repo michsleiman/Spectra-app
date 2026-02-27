@@ -75,7 +75,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             </svg>
           </button>
 
-          <nav className="flex bg-zinc-900 p-1.5 rounded-full border border-zinc-800">
+          <nav className="flex bg-zinc-900 p-1.5 rounded-full border border-zinc-800 shrink-0">
             <button 
               onClick={() => onToggleView('scales')}
               className={`px-4 lg:px-7 py-2 rounded-full text-[10px] lg:text-[11px] font-black uppercase tracking-widest transition-all ${viewMode === 'scales' ? 'bg-zinc-800 text-indigo-400 shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-300'}`}
