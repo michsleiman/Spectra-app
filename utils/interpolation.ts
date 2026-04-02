@@ -7,13 +7,11 @@ import { oklchToHex, calculateContrast, getUsageRecommendation } from './colorUt
  */
 export function generateScale(system: ColorSystem): ColorStep[] {
   const getStepIDs = (count: number) => {
-    if (count === 11) return [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
-    const ids: number[] = [];
-    const start = 50;
-    const end = 950;
-    const step = (end - start) / (count - 1);
-    for (let i = 0; i < count; i++) {
-      ids.push(Math.round(start + i * step));
+    const base = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+    if (count <= 11) return base.slice(0, count);
+    const ids = [...base];
+    for (let i = 11; i < count; i++) {
+      ids.push(950 + (i - 10) * 50);
     }
     return ids;
   };
@@ -36,7 +34,6 @@ export function generateScale(system: ColorSystem): ColorStep[] {
   const blackL = 0.05 * (1 - darkness);
   
   // ATMOSPHERIC DRIFT: Hue rotates as it approaches boundaries
-  // Note: We use 500 as the pivot point where hue is exactly seedHue
   const whiteHue = (seedHue + hueRotation) % 360;
   const blackHue = (seedHue - hueRotation + 360) % 360;
 
@@ -54,7 +51,13 @@ export function generateScale(system: ColorSystem): ColorStep[] {
   anchorPoints.sort((a, b) => a.id - b.id);
 
   // 3. GENERATE SCALE
-  return stepIDs.map(id => {
+  return stepIDs.map((id, index) => {
+    // VIRTUAL ID for interpolation: Map the index to the 50-950 range 
+    // so the colors always span the full perceptual range regardless of label count.
+    const virtualId = stepIDs.length > 1 
+      ? 50 + (index / (stepIDs.length - 1)) * 900 
+      : 500;
+
     // If it's locked, return it as-is (refreshing contrast only)
     const locked = system.steps.find(s => s.id === id && s.isLocked);
     if (locked) return { 
@@ -63,10 +66,10 @@ export function generateScale(system: ColorSystem): ColorStep[] {
       contrastOnBlack: calculateContrast(locked.hex, "#000000") 
     };
 
-    // Find bounding anchors
+    // Find bounding anchors using virtualId
     let lowerIdx = 0;
     for (let i = 0; i < anchorPoints.length - 1; i++) {
-      if (id >= anchorPoints[i].id && id <= anchorPoints[i+1].id) {
+      if (virtualId >= anchorPoints[i].id && virtualId <= anchorPoints[i+1].id) {
         lowerIdx = i;
         break;
       }
@@ -74,7 +77,7 @@ export function generateScale(system: ColorSystem): ColorStep[] {
 
     const lower = anchorPoints[lowerIdx];
     const upper = anchorPoints[lowerIdx + 1];
-    const t = (id - lower.id) / (upper.id - lower.id);
+    const t = (virtualId - lower.id) / (upper.id - lower.id);
 
     // --- CURVE STEEPNESS (LIGHTNESS BIAS) ---
     const getBiasedT = (rawT: number, s: number) => {
@@ -100,8 +103,8 @@ export function generateScale(system: ColorSystem): ColorStep[] {
     // Chroma: Piecewise linear + optional Punch boost
     let c = lower.oklch.c + (upper.oklch.c - lower.oklch.c) * t;
     
-    // Apply Chroma Punch
-    const midWeight = Math.max(0, Math.cos(((id - 500) / 750) * Math.PI / 2));
+    // Apply Chroma Punch using virtualId
+    const midWeight = Math.max(0, Math.cos(((virtualId - 500) / 750) * Math.PI / 2));
     c *= (1 + (punch * 0.8 * midWeight));
 
     // Perceptual Clamping
