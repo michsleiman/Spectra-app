@@ -57,7 +57,6 @@ export interface Palette {
   systems: ColorSystem[];
   semantics: SemanticToken[];
   globalSettings: {
-    syncCurves: boolean;
     masterControls: SystemControls;
   };
 }
@@ -74,3 +73,10 @@ export interface AIResponse {
 }
 
 export type ThemeMode = 'light' | 'dark';
+
+export interface Snapshot {
+  id: string;
+  name: string;
+  timestamp: number;
+  systems: ColorSystem[];
+}

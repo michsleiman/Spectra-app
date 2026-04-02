@@ -20,7 +20,6 @@ interface MainCanvasProps {
   onUpdateStepCount: (count: number) => void;
   allLocked: boolean;
   onRegenerate: () => void;
-  isSynced?: boolean;
 }
 
 type InputFormat = 'hsl' | 'rgb' | 'oklch';
@@ -41,8 +40,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
   onDeleteSemantic,
   onUpdateStepCount,
   allLocked, 
-  onRegenerate, 
-  isSynced 
+  onRegenerate 
 }) => {
   const [format, setFormat] = useState<InputFormat>('oklch');
   const [oklch, setOklch] = useState<OKLCH>({ l: 0.5, c: 0.15, h: 250 });
@@ -168,28 +166,14 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
         }`}
       >
         <main className="h-full overflow-y-auto scroll-smooth">
-          {/* HEADER */}
-          <header className="flex max-w-[1600px] mx-auto mb-0 flex-col md:flex-row md:items-end justify-between gap-4 py-6 px-4 sm:px-12 text-zinc-100">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-xl lg:text-2xl font-black tracking-tight text-white">{system.name}</h1>
-                {isSynced && !isBaseSystem && (
-                  <span className="bg-indigo-600/20 text-indigo-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-indigo-500/20 flex items-center gap-1.5 h-6 sm:h-7 whitespace-nowrap">
-                    Synced
-                  </span>
-                )}
-              </div>
-            </div>
-          </header>
-
-          <div className="max-w-[1600px] mx-auto px-4 sm:px-12 pb-24 lg:pb-12">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-12 pt-12 pb-24 lg:pb-12">
+            <div className="flex flex-col gap-12">
               {!isBaseSystem && (
-                <div className="lg:col-span-3">
+                <div className="w-full">
                   <div className="bg-zinc-950 sm:rounded-[2rem] p-0 sm:p-8 sm:border sm:border-zinc-800 shadow-2xl relative overflow-hidden flex flex-col h-full">
                     <div className="relative z-10 grid grid-cols-1 xl:grid-cols-12 xl:gap-10 flex-1">
                       
-                      <div className="xl:col-span-4 sticky top-0 z-30 sm:relative sm:top-auto flex flex-col h-full">
+                      <div className="xl:col-span-3 sticky top-0 z-30 sm:relative sm:top-auto flex flex-col h-full">
                         <div className="bg-zinc-950 sm:bg-transparent sm:border-0 p-0 sm:p-0 flex flex-col flex-1">
                            <div 
                              className="w-full min-h-[140px] xl:flex-1 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500 group/preview"
@@ -239,16 +223,21 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                  </select>
                               </div>
                               <button 
-                                onClick={() => onLockStep(quickStep, quickColor, true)}
-                                className="flex-[1.5] bg-indigo-600 hover:bg-indigo-500 text-white h-12 rounded-2xl font-black text-[10px] lg:text-xs uppercase tracking-[0.2em] shadow-md shadow-indigo-600/10 active:scale-[0.97] transition-all whitespace-nowrap"
+                                onClick={() => onLockStep(quickStep, quickColor, false)}
+                                disabled={allLocked}
+                                className={`flex-[1.5] h-12 rounded-2xl font-black text-[10px] lg:text-xs uppercase tracking-[0.2em] transition-all whitespace-nowrap shadow-md ${
+                                  allLocked 
+                                    ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed border border-zinc-700/50' 
+                                    : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/10 active:scale-[0.97]'
+                                }`}
                               >
-                                Update
+                                {allLocked ? 'Locked' : 'Update'}
                               </button>
                             </div>
                         </div>
                       </div>
 
-                      <div className="xl:col-span-8 px-0 sm:px-0 pt-10 pb-6 sm:p-0 space-y-4 sm:space-y-6">
+                      <div className="xl:col-span-6 px-0 sm:px-0 pt-10 pb-6 sm:p-0 space-y-4 sm:space-y-6">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                           <div className="space-y-1">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Perceptual Matrix</h3>
@@ -308,12 +297,30 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                  </select>
                               </div>
                               <button 
-                                onClick={() => onLockStep(quickStep, quickColor, true)}
-                                className="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-white h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-md shadow-indigo-600/10 active:scale-0.98 transition-all"
+                                onClick={() => onLockStep(quickStep, quickColor, false)}
+                                disabled={allLocked}
+                                className={`flex-[2] h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-md ${
+                                  allLocked 
+                                    ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed border border-zinc-700/50' 
+                                    : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/10 active:scale-0.98'
+                                }`}
                               >
-                                Update
+                                {allLocked ? 'Locked' : 'Update'}
                               </button>
                             </div>
+                        </div>
+                      </div>
+
+                      <div className="xl:col-span-3 px-0 sm:px-0 pt-10 pb-6 sm:p-0 space-y-4 sm:space-y-6 border-t xl:border-t-0 xl:border-l border-zinc-900/50 xl:pl-10">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Scale Adjustment</h3>
+                        </div>
+
+                        <div className="space-y-5">
+                          <ControlSlider label="Luminance Punch" value={system.controls.punch} onChange={v => onUpdateControls({...system.controls, punch: v})} />
+                          <ControlSlider label="Atmospheric Drift" value={(system.controls.hueRotation + 60) / 120} gradient={driftGradient} onChange={v => onUpdateControls({...system.controls, hueRotation: (v * 120) - 60})} />
+                          <ControlSlider label="Curve Steepness" value={system.controls.steepness} onChange={v => onUpdateControls({...system.controls, steepness: v})} />
+                          <ControlSlider label="Black Point" value={system.controls.darkness} onChange={v => onUpdateControls({...system.controls, darkness: v})} />
                         </div>
                       </div>
                     </div>
@@ -321,181 +328,168 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                 </div>
               )}
 
-              {!isBaseSystem && (
-                <div className="lg:col-span-1">
-                  <div className="bg-zinc-950 rounded-[2rem] p-8 border border-zinc-800 shadow-xl flex flex-col h-full">
-                    <div className="flex items-center justify-between mb-10">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">SCALE ADJUSTMENT</h3>
+              <div className="space-y-4">
+                 <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-4">
+                      <h2 className="text-lg lg:text-xl font-bold tracking-tight text-white">
+                        {system.name} <span className="text-zinc-500 font-medium">Palette</span>
+                      </h2>
                     </div>
-                    <div className="space-y-8 flex-1 flex flex-col justify-start">
-                      <ControlSlider label="Luminance Punch" value={system.controls.punch} onChange={v => onUpdateControls({...system.controls, punch: v})} />
-                      <ControlSlider label="Atmospheric Drift" value={(system.controls.hueRotation + 60) / 120} gradient={driftGradient} onChange={v => onUpdateControls({...system.controls, hueRotation: (v * 120) - 60})} />
-                      <ControlSlider label="Curve Steepness" value={system.controls.steepness} onChange={v => onUpdateControls({...system.controls, steepness: v})} />
-                      <ControlSlider label="Black Point" value={system.controls.darkness} onChange={v => onUpdateControls({...system.controls, darkness: v})} />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-4 mt-12">
-               <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-6">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Color Palette</h3>
                     {!isBaseSystem && (
-                      <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-1 gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-1 gap-3">
+                          <button 
+                            onClick={() => onUpdateStepCount(Math.max(3, system.stepCount - 1))}
+                            className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
+                            </svg>
+                          </button>
+                          <span className="text-[10px] font-black text-white uppercase tracking-widest min-w-[60px] text-center">
+                            {system.stepCount} Steps
+                          </span>
+                          <button 
+                            onClick={() => onUpdateStepCount(Math.min(21, system.stepCount + 1))}
+                            className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </button>
+                        </div>
                         <button 
-                          onClick={() => onUpdateStepCount(Math.max(3, system.stepCount - 1))}
-                          className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
+                          onClick={onToggleLockAll}
+                          className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                            allLocked 
+                              ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.1)]' 
+                              : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                          }`}
                         >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
-                          </svg>
-                        </button>
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest min-w-[60px] text-center">
-                          {system.stepCount} Steps
-                        </span>
-                        <button 
-                          onClick={() => onUpdateStepCount(Math.min(21, system.stepCount + 1))}
-                          className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                          </svg>
+                          {allLocked ? 'Unlock All' : 'Lock All'}
                         </button>
                       </div>
                     )}
                   </div>
-                  {!isBaseSystem && (
-                    <button 
-                      onClick={onToggleLockAll}
-                      className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                        allLocked 
-                          ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.1)]' 
-                          : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700'
-                      }`}
-                    >
-                      {allLocked ? 'Unlock All' : 'Lock All'}
-                    </button>
-                  )}
-               </div>
-               <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-zinc-950">
-                  <div className="grid grid-cols-3 lg:flex lg:flex-row min-w-full lg:min-w-0 flex-1">
-                  {system.steps.map((step) => {
-                    const isImmutable = isBaseSystem;
-                    const contrastTextColor = step.contrastOnBlack > step.contrastOnWhite ? 'text-black' : 'text-white';
-                    const isMenuOpen = activeMenuId === step.id;
-                    
-                    return (
-                      <div 
-                        key={step.id} 
-                        className={`group relative h-24 lg:h-52 lg:flex-1 transition-all ${isImmutable ? 'cursor-default' : 'cursor-default'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
-                        style={{ backgroundColor: step.hex }}
-                      >
-                         <div className={`absolute inset-0 flex flex-col justify-between p-3 sm:p-4 pointer-events-none`}>
-                            <div className="flex justify-between items-start pointer-events-auto relative">
-                              <span className={`text-[10px] sm:text-[11px] font-black tracking-tighter ${contrastTextColor}`}>{step.id}</span>
-                              
-                              {!isImmutable && (
-                                <div className="relative" ref={isMenuOpen ? menuRef : null}>
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveMenuId(isMenuOpen ? null : step.id);
-                                    }}
-                                    className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all ${
-                                      isMenuOpen 
-                                        ? 'bg-white/30 backdrop-blur-md opacity-100' 
-                                        : 'bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100'
-                                    } ${contrastTextColor}`}
-                                  >
-                                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                                    </svg>
-                                  </button>
+                 <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-zinc-950">
+                    <div className="grid grid-cols-3 lg:flex lg:flex-row min-w-full lg:min-w-0 flex-1">
+                    {system.steps.map((step) => {
+                      const isImmutable = isBaseSystem;
+                      const contrastTextColor = step.contrastOnBlack > step.contrastOnWhite ? 'text-black' : 'text-white';
+                      const isMenuOpen = activeMenuId === step.id;
+                      
+                      return (
+                        <div 
+                          key={step.id} 
+                          className={`group relative h-24 lg:h-52 lg:flex-1 transition-all ${isImmutable ? 'cursor-default' : 'cursor-default'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
+                          style={{ backgroundColor: step.hex }}
+                        >
+                           <div className={`absolute inset-0 flex flex-col justify-between p-3 sm:p-4 pointer-events-none`}>
+                              <div className="flex justify-between items-start pointer-events-auto relative">
+                                <span className={`text-[10px] sm:text-[11px] font-black tracking-tighter ${contrastTextColor}`}>{step.id}</span>
+                                
+                                {!isImmutable && (
+                                  <div className="relative" ref={isMenuOpen ? menuRef : null}>
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenuId(isMenuOpen ? null : step.id);
+                                      }}
+                                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all ${
+                                        isMenuOpen 
+                                          ? 'bg-white/30 backdrop-blur-md opacity-100' 
+                                          : 'bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100'
+                                      } ${contrastTextColor}`}
+                                    >
+                                      <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                      </svg>
+                                    </button>
 
-                                  {isMenuOpen && (
-                                    <div className="absolute top-full right-0 mt-2 min-w-[140px] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
-                                      <div className="p-1.5 flex flex-col">
-                                        <button 
-                                          onClick={() => handleEditStep(step)}
-                                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
-                                        >
-                                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                          </svg>
-                                          <span className="text-[10px] font-black uppercase tracking-widest">Edit</span>
-                                        </button>
-                                        <button 
-                                          onClick={() => {
-                                            if (step.isLocked) onUnlockStep(step.id);
-                                            else onLockStep(step.id, step.hex);
-                                            setActiveMenuId(null);
-                                          }}
-                                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
-                                        >
-                                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                            {step.isLocked ? (
-                                              <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.367zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
-                                            ) : (
-                                              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                            )}
-                                          </svg>
-                                          <span className="text-[10px] font-black uppercase tracking-widest">{step.isLocked ? 'Unlock' : 'Lock'}</span>
-                                        </button>
-                                        <button 
-                                          onClick={() => {
-                                            navigator.clipboard.writeText(step.hex);
-                                            setCopiedId(step.id);
-                                            setTimeout(() => setCopiedId(null), 1500);
-                                            setActiveMenuId(null);
-                                          }}
-                                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
-                                        >
-                                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                          </svg>
-                                          <span className="text-[10px] font-black uppercase tracking-widest">Copy HEX</span>
-                                        </button>
+                                    {isMenuOpen && (
+                                      <div className="absolute top-full right-0 mt-2 min-w-[140px] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                                        <div className="p-1.5 flex flex-col">
+                                          <button 
+                                            onClick={() => handleEditStep(step)}
+                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
+                                          >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            </svg>
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Edit</span>
+                                          </button>
+                                          <button 
+                                            onClick={() => {
+                                              if (step.isLocked) onUnlockStep(step.id);
+                                              else onLockStep(step.id, step.hex);
+                                              setActiveMenuId(null);
+                                            }}
+                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
+                                          >
+                                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                              {step.isLocked ? (
+                                                <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.367zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+                                              ) : (
+                                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                              )}
+                                            </svg>
+                                            <span className="text-[10px] font-black uppercase tracking-widest">{step.isLocked ? 'Unlock' : 'Lock'}</span>
+                                          </button>
+                                          <button 
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(step.hex);
+                                              setCopiedId(step.id);
+                                              setTimeout(() => setCopiedId(null), 1500);
+                                              setActiveMenuId(null);
+                                            }}
+                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
+                                          >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Copy HEX</span>
+                                          </button>
+                                        </div>
                                       </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="space-y-1.5 sm:space-y-3">
-                              <div className={`flex flex-col gap-0.5 sm:gap-1.5 leading-none opacity-80 ${contrastTextColor}`}>
-                                <div className="flex items-center gap-1.5 sm:gap-2">
-                                  <span className="text-[9px] sm:text-[11px] font-black">W</span>
-                                  <span className="text-[9px] sm:text-[11px] font-mono font-black">{step.contrastOnWhite.toFixed(1)}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 sm:gap-2">
-                                  <span className="text-[9px] sm:text-[11px] font-black">B</span>
-                                  <span className="text-[9px] sm:text-[11px] font-mono font-black">{step.contrastOnBlack.toFixed(1)}</span>
-                                </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigator.clipboard.writeText(step.hex);
-                                  setCopiedId(step.id);
-                                  setTimeout(() => setCopiedId(null), 1500);
-                                }}
-                                className={`flex items-center justify-start w-fit px-1 py-1 -ml-1 rounded-lg transition-all hover:bg-current/10 active:scale-95 pointer-events-auto group/copy ${contrastTextColor}`}
-                                title="Copy Hex"
-                              >
-                                <span className="text-[10px] sm:text-[12px] font-mono font-black whitespace-nowrap uppercase tracking-tighter">
-                                  {copiedId === step.id ? 'Copied!' : step.hex}
-                                </span>
-                              </button>
-                            </div>
-                         </div>
-                      </div>
-                    );
-                  })}
-                  </div>
-               </div>
+                              
+                              <div className="space-y-1.5 sm:space-y-3">
+                                <div className={`flex flex-col gap-0.5 sm:gap-1.5 leading-none opacity-80 ${contrastTextColor}`}>
+                                  <div className="flex items-center gap-1.5 sm:gap-2">
+                                    <span className="text-[9px] sm:text-[11px] font-black">W</span>
+                                    <span className="text-[9px] sm:text-[11px] font-mono font-black">{step.contrastOnWhite.toFixed(1)}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 sm:gap-2">
+                                    <span className="text-[9px] sm:text-[11px] font-black">B</span>
+                                    <span className="text-[9px] sm:text-[11px] font-mono font-black">{step.contrastOnBlack.toFixed(1)}</span>
+                                  </div>
+                                </div>
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(step.hex);
+                                    setCopiedId(step.id);
+                                    setTimeout(() => setCopiedId(null), 1500);
+                                  }}
+                                  className={`flex items-center justify-start w-fit px-1 py-1 -ml-1 rounded-lg transition-all hover:bg-current/10 active:scale-95 pointer-events-auto group/copy ${contrastTextColor}`}
+                                  title="Copy Hex"
+                                >
+                                  <span className="text-[10px] sm:text-[12px] font-mono font-black whitespace-nowrap uppercase tracking-tighter">
+                                    {copiedId === step.id ? 'Copied!' : step.hex}
+                                  </span>
+                                </button>
+                              </div>
+                           </div>
+                        </div>
+                      );
+                    })}
+                    </div>
+                 </div>
+              </div>
+
             </div>
 
             {isBaseSystem && (

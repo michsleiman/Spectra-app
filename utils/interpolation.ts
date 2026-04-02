@@ -25,46 +25,43 @@ export function generateScale(system: ColorSystem): ColorStep[] {
   const { darkness, steepness, punch, hueRotation } = system.controls;
 
   // 2. CONSTRUCT ANCHOR MAP
-  let anchorPoints: Array<{ id: number; oklch: OKLCH }> = activeAnchors.map(a => ({
-    id: a.id,
-    oklch: a.oklch
-  }));
+  // For the "base" interpolation, we only use the boundary anchors and the system seed.
+  // We ignore user-locked steps during the interpolation phase to allow the global system 
+  // parameters (Hue, Chroma, etc.) to apply to all unlocked steps uniformly.
+  let anchorPoints: Array<{ id: number; oklch: OKLCH }> = [];
 
   // Boundary Points (The pure white and the calculated black/deep-tone)
   const blackL = 0.05 * (1 - darkness);
-  
-  // ATMOSPHERIC DRIFT: Hue rotates as it approaches boundaries
   const whiteHue = (seedHue + hueRotation) % 360;
   const blackHue = (seedHue - hueRotation + 360) % 360;
 
   const whiteAnchor = { id: 0, oklch: { l: 0.998, c: 0.001, h: whiteHue } };
   const blackAnchor = { id: 1000, oklch: { l: blackL, c: 0.005, h: blackHue } };
 
-  if (!anchorPoints.find(a => a.id === 0)) anchorPoints.push(whiteAnchor);
-  if (!anchorPoints.find(a => a.id === 1000)) anchorPoints.push(blackAnchor);
+  anchorPoints.push(whiteAnchor);
+  anchorPoints.push(blackAnchor);
 
-  // VIRTUAL MIDPOINT
-  if (!anchorPoints.find(a => a.id === 500)) {
-    anchorPoints.push({ id: 500, oklch: { l: 0.5, c: seedChroma, h: seedHue } });
-  }
+  // VIRTUAL MIDPOINT (The Seed)
+  anchorPoints.push({ id: 500, oklch: { l: 0.5, c: seedChroma, h: seedHue } });
 
   anchorPoints.sort((a, b) => a.id - b.id);
 
   // 3. GENERATE SCALE
   return stepIDs.map((id, index) => {
-    // VIRTUAL ID for interpolation: Map the index to the 50-950 range 
-    // so the colors always span the full perceptual range regardless of label count.
-    const virtualId = stepIDs.length > 1 
-      ? 50 + (index / (stepIDs.length - 1)) * 900 
-      : 500;
-
     // If it's locked, return it as-is (refreshing contrast only)
+    // This implements the "cannot be changed what so ever" rule.
     const locked = system.steps.find(s => s.id === id && s.isLocked);
     if (locked) return { 
       ...locked, 
       contrastOnWhite: calculateContrast(locked.hex, "#FFFFFF"), 
       contrastOnBlack: calculateContrast(locked.hex, "#000000") 
     };
+
+    // VIRTUAL ID for interpolation: Map the index to the 50-950 range 
+    // so the colors always span the full perceptual range regardless of label count.
+    const virtualId = stepIDs.length > 1 
+      ? 50 + (index / (stepIDs.length - 1)) * 900 
+      : 500;
 
     // Find bounding anchors using virtualId
     let lowerIdx = 0;

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { ColorSystem, Palette, SystemType, SystemControls, AIResponse, SemanticToken, ThemeMode } from './types';
+import { ColorSystem, Palette, SystemType, SystemControls, AIResponse, SemanticToken, ThemeMode, Snapshot } from './types';
 import { generateScale } from './utils/interpolation';
 import { hexToOklch } from './utils/colorUtils';
 import { generateInitialSemantics, refreshSemantics } from './utils/semanticEngine';
@@ -8,6 +8,7 @@ import MainCanvas from './components/MainCanvas';
 import Toolbar from './components/Toolbar';
 import AIPromptModal from './components/AIPromptModal';
 import ExportModal from './components/ExportModal';
+import SnapshotModal from './components/SnapshotModal';
 
 const DEFAULT_CONTROLS: SystemControls = {
   punch: 0.15,
@@ -87,8 +88,38 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<ThemeMode>('dark');
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [syncCurves, setSyncCurves] = useState(false);
+  const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>(() => {
+    const saved = localStorage.getItem('spectra-snapshots');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('spectra-snapshots', JSON.stringify(snapshots));
+  }, [snapshots]);
+
+  const handleSaveSnapshot = useCallback((name: string) => {
+    const newSnapshot: Snapshot = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: name || `Snapshot ${new Date().toLocaleTimeString()}`,
+      timestamp: Date.now(),
+      systems: JSON.parse(JSON.stringify(systems)) // Deep clone
+    };
+    setSnapshots(prev => [newSnapshot, ...prev]);
+    setIsSnapshotModalOpen(false);
+  }, [systems]);
+
+  const handleRestoreSnapshot = useCallback((id: string) => {
+    const snapshot = snapshots.find(s => s.id === id);
+    if (snapshot) {
+      setSystems(JSON.parse(JSON.stringify(snapshot.systems)));
+    }
+  }, [snapshots]);
+
+  const handleDeleteSnapshot = useCallback((id: string) => {
+    setSnapshots(prev => prev.filter(s => s.id !== id));
+  }, []);
 
   const activeSystem = useMemo(() => 
     systems.find(s => s.id === activeSystemId) || systems[0], 
@@ -106,21 +137,13 @@ const App: React.FC = () => {
           }
           return updated;
         }
-        if (syncCurves && id !== s.id && s.type !== 'base') {
-          const source = updater(prev.find(x => x.id === id)!);
-          return {
-            ...s,
-            controls: source.controls,
-            steps: generateScale({ ...s, controls: source.controls })
-          };
-        }
         return s;
       });
       
       setSemantics(current => refreshSemantics(newSystems, current, theme));
       return newSystems;
     });
-  }, [syncCurves, theme]);
+  }, [theme]);
 
   const handleDeleteSystem = useCallback((id: string) => {
     setSystems(prev => {
@@ -148,8 +171,8 @@ const App: React.FC = () => {
 
       return {
         ...sys,
-        baseHue: clearOthers ? newOklch.h : sys.baseHue,
-        baseChroma: clearOthers ? newOklch.c : sys.baseChroma,
+        baseHue: newOklch.h,
+        baseChroma: newOklch.c,
         steps: nextSteps
       };
     });
@@ -398,8 +421,6 @@ const App: React.FC = () => {
           activeSystemId={activeSystemId} 
           onSelectSystem={handleSelectSystem}
           onDeleteSystem={handleDeleteSystem}
-          syncCurves={syncCurves}
-          onToggleSync={() => setSyncCurves(!syncCurves)}
           onOpenAI={() => setIsAIModalOpen(true)}
           onAddSystem={(name, type, hex) => {
             const id = Math.random().toString(36).substr(2, 9);
@@ -415,6 +436,10 @@ const App: React.FC = () => {
           onUpdateSemantic={handleUpdateSemantic}
           onAddSemantic={handleAddSemantic}
           onDeleteSemantic={handleDeleteSemantic}
+          snapshots={snapshots}
+          onSaveSnapshot={() => setIsSnapshotModalOpen(true)}
+          onRestoreSnapshot={handleRestoreSnapshot}
+          onDeleteSnapshot={handleDeleteSnapshot}
         />
       </div>
 
@@ -439,7 +464,6 @@ const App: React.FC = () => {
             system={activeSystem}
             semantics={semantics}
             allSystems={systems}
-            isSynced={syncCurves}
             onUpdateControls={controls => updateSystem(activeSystemId, s => ({ ...s, controls }))}
             onLockStep={handleLockStep}
             onUnlockStep={handleUnlockStep}
@@ -473,9 +497,16 @@ const App: React.FC = () => {
             name: 'Spectra Export', 
             systems, 
             semantics, 
-            globalSettings: { syncCurves, masterControls: DEFAULT_CONTROLS } 
+            globalSettings: { masterControls: DEFAULT_CONTROLS } 
           }} 
           onClose={() => setIsExportModalOpen(false)} 
+        />
+      )}
+
+      {isSnapshotModalOpen && (
+        <SnapshotModal 
+          onClose={() => setIsSnapshotModalOpen(false)}
+          onSave={handleSaveSnapshot}
         />
       )}
     </div>
