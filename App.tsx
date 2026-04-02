@@ -32,6 +32,7 @@ const createSystem = (id: string, name: string, type: SystemType, hue: number, c
       baseHue: hue,
       baseChroma: chroma,
       controls: controls,
+      stepCount: 2,
       steps: [
         {
           id: 0,
@@ -63,6 +64,7 @@ const createSystem = (id: string, name: string, type: SystemType, hue: number, c
     baseHue: hue,
     baseChroma: chroma,
     controls: controls,
+    stepCount: 11,
     steps: []
   };
   base.steps = generateScale(base);
@@ -372,6 +374,11 @@ const App: React.FC = () => {
     setSemantics(current => refreshSemantics(systems, current, theme));
   }, [theme, systems]);
 
+  const handleUpdateStepCount = (count: number) => {
+    if (activeSystem.type === 'base') return;
+    updateSystem(activeSystemId, sys => ({ ...sys, stepCount: count }));
+  };
+
   return (
     <div className="flex h-[100dvh] w-screen overflow-hidden bg-zinc-950 text-zinc-100 selection:bg-indigo-500/30">
       {isSidebarOpen && (
@@ -440,6 +447,7 @@ const App: React.FC = () => {
             onUpdateSemantic={handleUpdateSemantic}
             onAddSemantic={handleAddSemantic}
             onDeleteSemantic={handleDeleteSemantic}
+            onUpdateStepCount={handleUpdateStepCount}
             allLocked={activeSystem.steps.every(s => s.isLocked)}
             onRegenerate={() => updateSystem(activeSystemId, s => s)}
           />

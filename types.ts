@@ -34,6 +34,7 @@ export interface ColorSystem {
   controls: SystemControls;
   baseHue: number;    
   baseChroma: number; 
+  stepCount: number;
 }
 
 export type SemanticCategory = string;

@@ -17,6 +17,7 @@ interface MainCanvasProps {
   onUpdateSemantic: (tokenId: string, systemType: SystemType, stepId: number | 'white' | 'black') => void;
   onAddSemantic: (token: Partial<SemanticToken>) => void;
   onDeleteSemantic: (tokenId: string) => void;
+  onUpdateStepCount: (count: number) => void;
   allLocked: boolean;
   onRegenerate: () => void;
   isSynced?: boolean;
@@ -38,6 +39,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
   onUpdateSemantic,
   onAddSemantic,
   onDeleteSemantic,
+  onUpdateStepCount,
   allLocked, 
   onRegenerate, 
   isSynced 
@@ -231,8 +233,8 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                    onChange={(e) => setQuickStep(parseInt(e.target.value))}
                                    className="flex-1 bg-transparent text-sm font-bold text-white focus:outline-none appearance-none text-center"
                                  >
-                                   {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(s => (
-                                     <option key={s} value={s}>{s}</option>
+                                   {system.steps.map(s => (
+                                     <option key={s.id} value={s.id}>{s.id}</option>
                                    ))}
                                  </select>
                               </div>
@@ -300,8 +302,8 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                    onChange={(e) => setQuickStep(parseInt(e.target.value))}
                                    className="flex-1 bg-transparent text-sm font-bold text-white focus:outline-none appearance-none text-center"
                                  >
-                                   {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(s => (
-                                     <option key={s} value={s}>{s}</option>
+                                   {system.steps.map(s => (
+                                     <option key={s.id} value={s.id}>{s.id}</option>
                                    ))}
                                  </select>
                               </div>
@@ -338,7 +340,32 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
 
             <div className="space-y-4 mt-12">
                <div className="flex items-center justify-between px-1">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Color Palette</h3>
+                  <div className="flex items-center gap-6">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Color Palette</h3>
+                    {!isBaseSystem && (
+                      <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-1 gap-3">
+                        <button 
+                          onClick={() => onUpdateStepCount(Math.max(3, system.stepCount - 1))}
+                          className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
+                          </svg>
+                        </button>
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest min-w-[60px] text-center">
+                          {system.stepCount} Steps
+                        </span>
+                        <button 
+                          onClick={() => onUpdateStepCount(Math.min(21, system.stepCount + 1))}
+                          className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   {!isBaseSystem && (
                     <button 
                       onClick={onToggleLockAll}

@@ -6,7 +6,19 @@ import { oklchToHex, calculateContrast, getUsageRecommendation } from './colorUt
  * Stable Perceptual Scale Generator for OKLCH.
  */
 export function generateScale(system: ColorSystem): ColorStep[] {
-  const stepIDs = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+  const getStepIDs = (count: number) => {
+    if (count === 11) return [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+    const ids: number[] = [];
+    const start = 50;
+    const end = 950;
+    const step = (end - start) / (count - 1);
+    for (let i = 0; i < count; i++) {
+      ids.push(Math.round(start + i * step));
+    }
+    return ids;
+  };
+
+  const stepIDs = getStepIDs(system.stepCount || 11);
   const activeAnchors = system.steps.filter(s => s.isLocked);
   
   // 1. SYSTEM IDENTITY
