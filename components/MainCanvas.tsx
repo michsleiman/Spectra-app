@@ -171,12 +171,12 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
               {!isBaseSystem && (
                 <div className="w-full">
                   <div className="bg-zinc-950 sm:rounded-[2rem] p-0 sm:p-8 sm:border sm:border-zinc-800 shadow-2xl relative overflow-hidden flex flex-col h-full">
-                    <div className="relative z-10 grid grid-cols-1 xl:grid-cols-12 xl:gap-10 flex-1">
+                    <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 lg:gap-10 flex-1">
                       
-                      <div className="xl:col-span-3 sticky top-0 z-30 sm:relative sm:top-auto flex flex-col h-full">
+                      <div className="lg:col-span-3 sticky top-0 z-30 sm:relative sm:top-auto flex flex-col h-full">
                         <div className="bg-zinc-950 sm:bg-transparent sm:border-0 p-0 sm:p-0 flex flex-col flex-1">
                            <div 
-                             className="w-full min-h-[140px] xl:flex-1 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500 group/preview"
+                             className="w-full min-h-[140px] lg:flex-1 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500 group/preview"
                              style={{ backgroundColor: quickColor }}
                            >
                               <div className={`relative z-10 flex flex-col items-center transition-all duration-300 ${isHexFocused ? 'scale-105' : ''}`}>
@@ -208,7 +208,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                            </div>
                         </div>
 
-                        <div className="hidden xl:block mt-8 w-full px-2">
+                        <div className="hidden lg:block mt-8 w-full px-2">
                             <div className="flex items-center gap-3">
                               <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center px-4 h-12">
                                  <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mr-2">Step</span>
@@ -237,7 +237,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         </div>
                       </div>
 
-                      <div className="xl:col-span-6 px-0 sm:px-0 pt-10 pb-6 sm:p-0 space-y-4 sm:space-y-6">
+                      <div className="lg:col-span-6 px-0 pt-10 pb-6 lg:p-0 space-y-4 sm:space-y-6">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                           <div className="space-y-1">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Perceptual Matrix</h3>
@@ -282,7 +282,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         </div>
 
                         {/* MOBILE STEP PICKER */}
-                        <div className="xl:hidden pt-2 border-t border-zinc-900/50">
+                        <div className="lg:hidden pt-2 border-t border-zinc-900/50">
                             <div className="flex items-center gap-3">
                               <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center px-4 h-12">
                                  <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mr-2">Step</span>
@@ -311,7 +311,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         </div>
                       </div>
 
-                      <div className="xl:col-span-3 px-0 sm:px-0 pt-10 pb-6 sm:p-0 space-y-4 sm:space-y-6 border-t xl:border-t-0 xl:border-l border-zinc-900/50 xl:pl-10">
+                      <div className="lg:col-span-3 px-0 pt-12 pb-6 lg:p-0 space-y-4 sm:space-y-6 border-t lg:border-t-0 lg:border-l border-zinc-900/50 lg:pl-10">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Scale Adjustment</h3>
                         </div>
@@ -332,7 +332,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                  <div className="flex items-center justify-between px-1">
                     <div className="flex items-center gap-4">
                       <h2 className="text-lg lg:text-xl font-bold tracking-tight text-white">
-                        {system.name} <span className="text-zinc-500 font-medium">Palette</span>
+                        {system.name} <span className="text-white font-medium">Palette</span>
                       </h2>
                     </div>
                     {!isBaseSystem && (

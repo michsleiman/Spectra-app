@@ -170,8 +170,15 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="p-4 flex items-center justify-between mt-2">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-          {viewMode === 'scales' ? 'Color Systems' : 'Semantic Tokens'}
+        <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+          {viewMode === 'scales' ? (
+            <>
+              <span className="text-zinc-500">Color Systems</span>
+              <span className="text-white ml-2">Palette</span>
+            </>
+          ) : (
+            <span className="text-zinc-500">Semantic Tokens</span>
+          )}
         </h2>
         <div className="flex items-center gap-1">
           {viewMode === 'semantics' && (
