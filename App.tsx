@@ -168,8 +168,6 @@ const App: React.FC = () => {
 
       return {
         ...sys,
-        baseHue: newOklch.h,
-        baseChroma: newOklch.c,
         steps: nextSteps
       };
     });

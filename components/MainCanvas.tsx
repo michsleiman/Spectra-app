@@ -87,6 +87,71 @@ const SnapshotNamingModal: React.FC<{
   );
 };
 
+const ScaleInfoModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+}> = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-zinc-900 border border-zinc-800 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-8 border-b border-zinc-800 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white tracking-tight">Scale Adjustments</h2>
+          <button 
+            onClick={onClose}
+            className="p-2 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-xl transition-all"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="p-8 space-y-8 overflow-y-auto max-h-[70vh] custom-scrollbar">
+          <div className="space-y-3">
+            <h4 className="text-indigo-400 text-[11px] font-black uppercase tracking-widest">Luminance Punch</h4>
+            <p className="text-zinc-400 text-sm leading-relaxed">
+              Boosts chroma (saturation) in the middle of the scale. This makes your midtones more vibrant and "punchy" without affecting the pure white and deep black ends of the palette.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <h4 className="text-indigo-400 text-[11px] font-black uppercase tracking-widest">Atmospheric Drift</h4>
+            <p className="text-zinc-400 text-sm leading-relaxed">
+              Rotates the hue between the light and dark ends of the scale. This simulates natural lighting conditions where shadows and highlights often have slightly different color temperatures.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <h4 className="text-indigo-400 text-[11px] font-black uppercase tracking-widest">Curve Steepness</h4>
+            <p className="text-zinc-400 text-sm leading-relaxed">
+              Adjusts the lightness distribution. Higher values create a steeper curve, pushing more colors towards the light and dark extremes and creating higher contrast in the mid-range.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <h4 className="text-indigo-400 text-[11px] font-black uppercase tracking-widest">Black Point</h4>
+            <p className="text-zinc-400 text-sm leading-relaxed">
+              Sets the floor for the darkest color in your scale. Increasing this value prevents the scale from reaching pure black, which is useful for creating softer, more modern UI themes.
+            </p>
+          </div>
+        </div>
+        <div className="p-8 bg-zinc-950/50 border-t border-zinc-800">
+          <button 
+            onClick={onClose}
+            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-indigo-600/20"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 type InputFormat = 'hsl' | 'rgb' | 'oklch';
 
 const MainCanvas: React.FC<MainCanvasProps> = ({ 
@@ -114,29 +179,17 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
   const [format, setFormat] = useState<InputFormat>('oklch');
   const [oklch, setOklch] = useState<OKLCH>({ l: 0.5, c: 0.15, h: 250 });
   const [quickStep, setQuickStep] = useState(500);
-  const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [isHexFocused, setIsHexFocused] = useState(false);
   const [isSnapshotNamingOpen, setIsSnapshotNamingOpen] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   
   const quickColor = useMemo(() => oklchToHex(oklch), [oklch]);
   const [localHex, setLocalHex] = useState(quickColor);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLocalHex(quickColor);
   }, [quickColor]);
-
-  // Click outside to close swatch menus
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (activeMenuId !== null && menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setActiveMenuId(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [activeMenuId]);
 
   const rgb = useMemo(() => {
     const hex = quickColor;
@@ -180,7 +233,6 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
   const handleEditStep = (step: ColorStep) => {
     setOklch(step.oklch);
     setQuickStep(step.id);
-    setActiveMenuId(null);
   };
 
   const driftGradient = useMemo(() => {
@@ -326,7 +378,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         </div>
 
                         <div className="relative">
-                          <div className="min-h-[100px] sm:min-h-[120px]">
+                          <div className="min-h-[120px] sm:min-h-[144px]">
                             {format === 'oklch' && (
                               <div key="oklch-view" className="space-y-3 sm:space-y-4 animate-[fade-in-slide-down_0.2s_ease-out]">
                                 <ControlSliderRaw label="Lightness" val={oklch.l} max={1} step={0.001} gradient={lGradient} onChange={v => handleOklchChange('l', v)} />
@@ -384,6 +436,16 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                       <div className="lg:col-span-3 px-0 pt-12 pb-4 lg:p-0 space-y-3 lg:space-y-4 border-t lg:border-t-0 lg:border-l border-zinc-900/50 lg:pl-6">
                         <div className="flex items-center justify-between mb-0.5">
                           <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600">Scale Adjustment</h3>
+                          <button 
+                            onClick={() => setShowInfoModal(true)}
+                            className="p-1.5 text-zinc-600 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all"
+                            title="Learn about scale adjustments"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="10" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
+                            </svg>
+                          </button>
                         </div>
 
                         <div className="space-y-3">
@@ -445,87 +507,50 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                     {system.steps.map((step) => {
                       const isImmutable = isBaseSystem;
                       const contrastTextColor = step.contrastOnBlack > step.contrastOnWhite ? 'text-black' : 'text-white';
-                      const isMenuOpen = activeMenuId === step.id;
                       
                       return (
                         <div 
                           key={step.id} 
-                          className={`group relative h-20 md:h-32 md:flex-1 transition-all ${isImmutable ? 'cursor-default' : 'cursor-default'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
+                          onClick={() => !isImmutable && handleEditStep(step)}
+                          className={`group relative h-[120px] md:h-48 md:flex-1 transition-all ${isImmutable ? 'cursor-default' : 'cursor-pointer'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-white/40 ring-inset shadow-[0_0_40px_rgba(0,0,0,0.2)]' : ''}`}
                           style={{ backgroundColor: step.hex }}
                         >
-                           <div className={`absolute inset-0 flex flex-col justify-between p-3 sm:p-4 pointer-events-none`}>
-                              <div className="flex justify-between items-start pointer-events-auto relative">
+                           <div className="absolute inset-0 pointer-events-none">
+                              <div className="absolute top-3 left-3 pointer-events-auto">
                                 <span className={`text-[10px] sm:text-[11px] font-black tracking-tighter ${contrastTextColor}`}>{step.id}</span>
+                              </div>
                                 
                                 {!isImmutable && (
-                                  <div className="relative" ref={isMenuOpen ? menuRef : null}>
-                                    <button 
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveMenuId(isMenuOpen ? null : step.id);
-                                      }}
-                                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all ${
-                                        isMenuOpen 
-                                          ? 'bg-white/30 backdrop-blur-md opacity-100' 
-                                          : 'bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100'
-                                      } ${contrastTextColor}`}
-                                    >
-                                      <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                                      </svg>
-                                    </button>
-
-                                    {isMenuOpen && (
-                                      <div className="absolute top-full right-0 mt-2 min-w-[140px] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
-                                        <div className="p-1.5 flex flex-col">
-                                          <button 
-                                            onClick={() => handleEditStep(step)}
-                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
-                                          >
-                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                            </svg>
-                                            <span className="text-[10px] font-black uppercase tracking-widest">Edit</span>
-                                          </button>
-                                          <button 
-                                            onClick={() => {
-                                              if (step.isLocked) onUnlockStep(step.id);
-                                              else onLockStep(step.id, step.hex);
-                                              setActiveMenuId(null);
-                                            }}
-                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
-                                          >
-                                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                              {step.isLocked ? (
-                                                <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.367zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
-                                              ) : (
-                                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                              )}
-                                            </svg>
-                                            <span className="text-[10px] font-black uppercase tracking-widest">{step.isLocked ? 'Unlock' : 'Lock'}</span>
-                                          </button>
-                                          <button 
-                                            onClick={() => {
-                                              navigator.clipboard.writeText(step.hex);
-                                              setCopiedId(step.id);
-                                              setTimeout(() => setCopiedId(null), 1500);
-                                              setActiveMenuId(null);
-                                            }}
-                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors text-left"
-                                          >
-                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                            </svg>
-                                            <span className="text-[10px] font-black uppercase tracking-widest">Copy HEX</span>
-                                          </button>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (step.isLocked) onUnlockStep(step.id);
+                                      else onLockStep(step.id, step.hex);
+                                    }}
+                                    className={`absolute top-0 right-0 w-10 h-10 flex items-center justify-center transition-all pointer-events-auto ${
+                                      step.isLocked 
+                                        ? 'opacity-100' 
+                                        : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+                                    } ${contrastTextColor}`}
+                                    title={step.isLocked ? 'Unlock Color' : 'Lock Color'}
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                      {step.isLocked ? (
+                                        <>
+                                          <rect width="16" height="10" x="4" y="12" rx="2" ry="2" fill="currentColor" stroke="none" />
+                                          <path d="M7 12V8a5 5 0 0 1 10 0v4" />
+                                        </>
+                                      ) : (
+                                        <>
+                                          <rect width="16" height="10" x="4" y="12" rx="2" ry="2" fill="none" />
+                                          <path d="M7 12V8a5 5 0 0 1 9-4" />
+                                        </>
+                                      )}
+                                    </svg>
+                                  </button>
                                 )}
-                              </div>
                               
-                              <div className="space-y-1.5 sm:space-y-3">
+                              <div className="absolute bottom-3 left-3 right-3 space-y-1.5 sm:space-y-3">
                                 <div className={`flex flex-col gap-0.5 sm:gap-1.5 leading-none opacity-80 ${contrastTextColor}`}>
                                   <div className="flex items-center gap-1.5 sm:gap-2">
                                     <span className="text-[9px] sm:text-[11px] font-black">W</span>
@@ -678,6 +703,11 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
           onSaveSnapshot(name);
           setIsSnapshotNamingOpen(false);
         }}
+      />
+
+      <ScaleInfoModal 
+        isOpen={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
       />
     </div>
   );
