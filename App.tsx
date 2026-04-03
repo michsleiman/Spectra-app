@@ -436,10 +436,6 @@ const App: React.FC = () => {
           onUpdateSemantic={handleUpdateSemantic}
           onAddSemantic={handleAddSemantic}
           onDeleteSemantic={handleDeleteSemantic}
-          snapshots={snapshots}
-          onSaveSnapshot={() => setIsSnapshotModalOpen(true)}
-          onRestoreSnapshot={handleRestoreSnapshot}
-          onDeleteSnapshot={handleDeleteSnapshot}
         />
       </div>
 
@@ -474,6 +470,10 @@ const App: React.FC = () => {
             onUpdateStepCount={handleUpdateStepCount}
             allLocked={activeSystem.steps.every(s => s.isLocked)}
             onRegenerate={() => updateSystem(activeSystemId, s => s)}
+            snapshots={snapshots}
+            onSaveSnapshot={() => setIsSnapshotModalOpen(true)}
+            onRestoreSnapshot={handleRestoreSnapshot}
+            onDeleteSnapshot={handleDeleteSnapshot}
           />
         </div>
       </div>

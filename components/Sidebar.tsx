@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ColorSystem, SystemType, SemanticToken, ThemeMode, Snapshot } from '../types';
+import { ColorSystem, SystemType, SemanticToken, ThemeMode } from '../types';
 
 interface SidebarProps {
   viewMode: 'scales' | 'semantics';
@@ -17,11 +17,6 @@ interface SidebarProps {
   onUpdateSemantic: (tokenId: string, systemType: SystemType, stepId: number | 'white' | 'black') => void;
   onAddSemantic: (token: Partial<SemanticToken>) => void;
   onDeleteSemantic: (tokenId: string) => void;
-  // Snapshot props
-  snapshots: Snapshot[];
-  onSaveSnapshot: () => void;
-  onRestoreSnapshot: (id: string) => void;
-  onDeleteSnapshot: (id: string) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -38,11 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   theme,
   onUpdateSemantic,
   onAddSemantic,
-  onDeleteSemantic,
-  snapshots,
-  onSaveSnapshot,
-  onRestoreSnapshot,
-  onDeleteSnapshot
+  onDeleteSemantic
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [isEditingSemantics, setIsEditingSemantics] = useState(false);
@@ -170,15 +161,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="p-4 flex items-center justify-between mt-2">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
-          {viewMode === 'scales' ? (
-            <>
-              <span className="text-zinc-500">Color Systems</span>
-              <span className="text-white ml-2">Palette</span>
-            </>
-          ) : (
-            <span className="text-zinc-500">Semantic Tokens</span>
-          )}
+        <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+          {viewMode === 'scales' ? 'Color Systems' : 'Semantic Tokens'}
         </h2>
         <div className="flex items-center gap-1">
           {viewMode === 'semantics' && (
@@ -358,62 +342,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
       </div>
-
-      {/* SNAPSHOTS SECTION */}
-      {viewMode === 'scales' && (
-        <div className="px-2 pb-4 border-t border-zinc-900 pt-4">
-          <div className="px-2 flex items-center justify-between mb-3">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Snapshots</h2>
-            <button 
-              onClick={() => onSaveSnapshot()}
-              className="text-[9px] font-black uppercase tracking-widest text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1.5"
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-              Capture
-            </button>
-          </div>
-          
-          <div className="space-y-2 max-h-[200px] overflow-y-auto px-1 custom-scrollbar">
-            {snapshots.length === 0 ? (
-              <p className="text-[10px] text-zinc-600 italic px-2">No snapshots saved yet.</p>
-            ) : (
-              snapshots.map(snapshot => (
-                <div 
-                  key={snapshot.id}
-                  className="group bg-zinc-900/30 border border-zinc-800/50 hover:border-zinc-700/50 rounded-xl p-2.5 transition-all cursor-pointer"
-                  onClick={() => onRestoreSnapshot(snapshot.id)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold text-zinc-300 truncate pr-2">{snapshot.name}</span>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteSnapshot(snapshot.id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-zinc-600 hover:text-red-400 transition-all"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden">
-                    {snapshot.systems.filter(s => s.type !== 'base').map(s => (
-                      <div 
-                        key={s.id} 
-                        className="flex-1" 
-                        style={{ backgroundColor: s.steps.find(st => st.id === 500)?.hex || s.steps[0].hex }} 
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
       
       <div className="p-4 bg-zinc-950/20 border-t border-zinc-900/50">
         <p className="text-[10px] text-zinc-700 font-medium uppercase tracking-widest text-center">

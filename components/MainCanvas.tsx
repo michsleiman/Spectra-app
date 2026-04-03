@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { ColorSystem, ColorStep, OKLCH, SystemControls, SemanticToken, SystemType, ThemeMode } from '../types';
+import { ColorSystem, ColorStep, OKLCH, SystemControls, SemanticToken, SystemType, ThemeMode, Snapshot } from '../types';
 import { hexToOklch, oklchToHex, hexToHsl, hslToHex } from '../utils/colorUtils';
 import PlaygroundView from './PlaygroundView';
 
@@ -20,7 +20,72 @@ interface MainCanvasProps {
   onUpdateStepCount: (count: number) => void;
   allLocked: boolean;
   onRegenerate: () => void;
+  // Snapshot props
+  snapshots: Snapshot[];
+  onSaveSnapshot: (name: string) => void;
+  onRestoreSnapshot: (id: string) => void;
+  onDeleteSnapshot: (id: string) => void;
 }
+
+const SnapshotNamingModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (name: string) => void;
+}> = ({ isOpen, onClose, onSave }) => {
+  const [name, setName] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[2rem] p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+        <h3 className="text-xl font-bold text-white mb-2">Save Snapshot</h3>
+        <p className="text-zinc-500 text-sm mb-6">Give your current color state a name to save it to your history.</p>
+        
+        <input
+          ref={inputRef}
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Dark Mode V2"
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-6"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              onSave(name);
+              setName('');
+            }
+            if (e.key === 'Escape') onClose();
+          }}
+        />
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-3 bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl text-sm font-bold transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              onSave(name);
+              setName('');
+            }}
+            className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20"
+          >
+            Save Snapshot
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 type InputFormat = 'hsl' | 'rgb' | 'oklch';
 
@@ -40,7 +105,11 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
   onDeleteSemantic,
   onUpdateStepCount,
   allLocked, 
-  onRegenerate 
+  onRegenerate,
+  snapshots,
+  onSaveSnapshot,
+  onRestoreSnapshot,
+  onDeleteSnapshot
 }) => {
   const [format, setFormat] = useState<InputFormat>('oklch');
   const [oklch, setOklch] = useState<OKLCH>({ l: 0.5, c: 0.15, h: 250 });
@@ -48,6 +117,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [isHexFocused, setIsHexFocused] = useState(false);
+  const [isSnapshotNamingOpen, setIsSnapshotNamingOpen] = useState(false);
   
   const quickColor = useMemo(() => oklchToHex(oklch), [oklch]);
   const [localHex, setLocalHex] = useState(quickColor);
@@ -165,18 +235,18 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
             : 'opacity-0 -translate-x-12 pointer-events-none'
         }`}
       >
-        <main className="h-full overflow-y-auto scroll-smooth">
-          <div className="max-w-[1600px] mx-auto px-4 sm:px-12 pt-12 pb-24 lg:pb-12">
-            <div className="flex flex-col gap-12">
+        <main className="h-full overflow-y-auto scroll-smooth custom-scrollbar">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-12 pt-4 pb-8">
+            <div className="flex flex-col gap-4 lg:gap-6">
               {!isBaseSystem && (
                 <div className="w-full">
-                  <div className="bg-zinc-950 sm:rounded-[2rem] p-0 sm:p-8 sm:border sm:border-zinc-800 shadow-2xl relative overflow-hidden flex flex-col h-full">
-                    <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 lg:gap-10 flex-1">
+                  <div className="bg-zinc-950 sm:rounded-[2rem] p-0 sm:p-5 sm:border sm:border-zinc-800 shadow-2xl relative overflow-hidden flex flex-col h-full">
+                    <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 lg:gap-8 flex-1">
                       
-                      <div className="lg:col-span-3 sticky top-0 z-30 sm:relative sm:top-auto flex flex-col h-full">
-                        <div className="bg-zinc-950 sm:bg-transparent sm:border-0 p-0 sm:p-0 flex flex-col flex-1">
+                      <div className="lg:col-span-3 sticky top-0 z-30 lg:relative lg:top-auto flex flex-col h-full">
+                        <div className="bg-zinc-950 lg:bg-transparent lg:border-0 p-0 lg:p-0 flex flex-col flex-1">
                            <div 
-                             className="w-full min-h-[140px] lg:flex-1 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500 group/preview"
+                             className="w-full min-h-[100px] lg:flex-1 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500 group/preview"
                              style={{ backgroundColor: quickColor }}
                            >
                               <div className={`relative z-10 flex flex-col items-center transition-all duration-300 ${isHexFocused ? 'scale-105' : ''}`}>
@@ -208,14 +278,14 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                            </div>
                         </div>
 
-                        <div className="hidden lg:block mt-8 w-full px-2">
-                            <div className="flex items-center gap-3">
-                              <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center px-4 h-12">
-                                 <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mr-2">Step</span>
+                        <div className="hidden lg:block mt-4 w-full px-2">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center px-3 h-9">
+                                 <span className="text-[8px] font-black text-zinc-500 uppercase tracking-widest mr-1.5">Step</span>
                                  <select 
                                    value={quickStep}
                                    onChange={(e) => setQuickStep(parseInt(e.target.value))}
-                                   className="flex-1 bg-transparent text-sm font-bold text-white focus:outline-none appearance-none text-center"
+                                   className="flex-1 bg-transparent text-[11px] font-bold text-white focus:outline-none appearance-none text-center"
                                  >
                                    {system.steps.map(s => (
                                      <option key={s.id} value={s.id}>{s.id}</option>
@@ -225,7 +295,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                               <button 
                                 onClick={() => onLockStep(quickStep, quickColor, false)}
                                 disabled={allLocked}
-                                className={`flex-[1.5] h-12 rounded-2xl font-black text-[10px] lg:text-xs uppercase tracking-[0.2em] transition-all whitespace-nowrap shadow-md ${
+                                className={`flex-[1.2] h-9 rounded-xl font-black text-[9px] uppercase tracking-[0.15em] transition-all whitespace-nowrap shadow-md ${
                                   allLocked 
                                     ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed border border-zinc-700/50' 
                                     : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/10 active:scale-[0.97]'
@@ -237,17 +307,17 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         </div>
                       </div>
 
-                      <div className="lg:col-span-6 px-0 pt-10 pb-6 lg:p-0 space-y-4 sm:space-y-6">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-                          <div className="space-y-1">
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Perceptual Matrix</h3>
+                      <div className="lg:col-span-6 px-0 pt-6 pb-2 lg:p-0 space-y-3 lg:space-y-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                          <div className="space-y-0.5">
+                            <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600">Perceptual Matrix</h3>
                           </div>
-                          <div className="flex bg-zinc-900/50 rounded-2xl p-1 border border-zinc-800/50 w-full sm:w-auto overflow-hidden">
+                          <div className="flex bg-zinc-900/50 rounded-xl p-0.5 border border-zinc-800/50 w-full sm:w-auto overflow-hidden">
                             {['oklch', 'rgb', 'hsl'].map((f) => (
                               <button
                                 key={f}
                                 onClick={() => setFormat(f as any)}
-                                className={`flex-1 sm:flex-none px-4 lg:px-5 py-2.5 text-[9px] lg:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${format === f ? 'bg-zinc-800 text-indigo-400 shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-400'}`}
+                                className={`flex-1 sm:flex-none px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${format === f ? 'bg-zinc-800 text-indigo-400 shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-400'}`}
                               >
                                 {f}
                               </button>
@@ -256,23 +326,23 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         </div>
 
                         <div className="relative">
-                          <div className="min-h-[130px] sm:min-h-[150px]">
+                          <div className="min-h-[100px] sm:min-h-[120px]">
                             {format === 'oklch' && (
-                              <div key="oklch-view" className="space-y-4 sm:space-y-6 animate-[fade-in-slide-down_0.2s_ease-out]">
+                              <div key="oklch-view" className="space-y-3 sm:space-y-4 animate-[fade-in-slide-down_0.2s_ease-out]">
                                 <ControlSliderRaw label="Lightness" val={oklch.l} max={1} step={0.001} gradient={lGradient} onChange={v => handleOklchChange('l', v)} />
                                 <ControlSliderRaw label="Chroma" val={oklch.c} max={0.4} step={0.001} gradient={lGradient} onChange={v => handleOklchChange('c', v)} />
                                 <ControlSliderRaw label="Hue" val={oklch.h} max={360} step={1} gradient={hGradient} onChange={v => handleOklchChange('h', v)} />
                               </div>
                             )}
                             {format === 'rgb' && (
-                              <div key="rgb-view" className="space-y-4 sm:space-y-6 animate-[fade-in-slide-down_0.2s_ease-out]">
+                              <div key="rgb-view" className="space-y-3 sm:space-y-4 animate-[fade-in-slide-down_0.2s_ease-out]">
                                 <ControlSliderRaw label="Red" val={rgb.r} max={255} step={1} gradient={rGradient} onChange={v => handleRgbChange('r', v)} />
                                 <ControlSliderRaw label="Green" val={rgb.g} max={255} step={1} gradient={gGradient} onChange={v => handleRgbChange('g', v)} />
                                 <ControlSliderRaw label="Blue" val={rgb.b} max={255} step={1} gradient={bGradient} onChange={v => handleRgbChange('b', v)} />
                               </div>
                             )}
                             {format === 'hsl' && (
-                              <div key="hsl-view" className="space-y-4 sm:space-y-6 animate-[fade-in-slide-down_0.2s_ease-out]">
+                              <div key="hsl-view" className="space-y-3 sm:space-y-4 animate-[fade-in-slide-down_0.2s_ease-out]">
                                 <ControlSliderRaw label="Hue" val={hsl.h} max={360} step={1} gradient={hslHGradient} onChange={v => handleHslChange('h', v)} />
                                 <ControlSliderRaw label="Saturation" val={hsl.s} max={100} step={1} gradient={hslSGradient} onChange={v => handleHslChange('s', v)} />
                                 <ControlSliderRaw label="Lightness" val={hsl.l} max={100} step={1} gradient={hslLGradient} onChange={v => handleHslChange('l', v)} />
@@ -282,7 +352,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         </div>
 
                         {/* MOBILE STEP PICKER */}
-                        <div className="lg:hidden pt-2 border-t border-zinc-900/50">
+                        <div className="lg:hidden pt-4 border-t border-zinc-900/50">
                             <div className="flex items-center gap-3">
                               <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center px-4 h-12">
                                  <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mr-2">Step</span>
@@ -311,12 +381,12 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         </div>
                       </div>
 
-                      <div className="lg:col-span-3 px-0 pt-12 pb-6 lg:p-0 space-y-4 sm:space-y-6 border-t lg:border-t-0 lg:border-l border-zinc-900/50 lg:pl-10">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Scale Adjustment</h3>
+                      <div className="lg:col-span-3 px-0 pt-12 pb-4 lg:p-0 space-y-3 lg:space-y-4 border-t lg:border-t-0 lg:border-l border-zinc-900/50 lg:pl-6">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600">Scale Adjustment</h3>
                         </div>
 
-                        <div className="space-y-5">
+                        <div className="space-y-3">
                           <ControlSlider label="Luminance Punch" value={system.controls.punch} onChange={v => onUpdateControls({...system.controls, punch: v})} />
                           <ControlSlider label="Atmospheric Drift" value={(system.controls.hueRotation + 60) / 120} gradient={driftGradient} onChange={v => onUpdateControls({...system.controls, hueRotation: (v * 120) - 60})} />
                           <ControlSlider label="Curve Steepness" value={system.controls.steepness} onChange={v => onUpdateControls({...system.controls, steepness: v})} />
@@ -328,51 +398,50 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                 </div>
               )}
 
-              <div className="space-y-4">
-                 <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-4">
-                      <h2 className="text-lg lg:text-xl font-bold tracking-tight text-white">
-                        {system.name} <span className="text-white font-medium">Palette</span>
-                      </h2>
-                    </div>
-                    {!isBaseSystem && (
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-1 gap-3">
-                          <button 
-                            onClick={() => onUpdateStepCount(Math.max(3, system.stepCount - 1))}
-                            className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
-                            </svg>
-                          </button>
-                          <span className="text-[10px] font-black text-white uppercase tracking-widest min-w-[60px] text-center">
-                            {system.stepCount} Steps
-                          </span>
-                          <button 
-                            onClick={() => onUpdateStepCount(Math.min(21, system.stepCount + 1))}
-                            className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                            </svg>
-                          </button>
-                        </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <h2 className="text-lg lg:text-xl font-bold tracking-tight text-white">
+                    {system.name} <span className="text-white font-bold">Palette</span>
+                  </h2>
+                  {!isBaseSystem && (
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-1 gap-3">
                         <button 
-                          onClick={onToggleLockAll}
-                          className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                            allLocked 
-                              ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.1)]' 
-                              : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700'
-                          }`}
+                          onClick={() => onUpdateStepCount(Math.max(3, system.stepCount - 1))}
+                          className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
                         >
-                          {allLocked ? 'Unlock All' : 'Lock All'}
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
+                          </svg>
+                        </button>
+                        <span className="text-[9px] font-black text-white uppercase tracking-widest min-w-[50px] text-center">
+                          {system.stepCount} Steps
+                        </span>
+                        <button 
+                          onClick={() => onUpdateStepCount(Math.min(21, system.stepCount + 1))}
+                          className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                          </svg>
                         </button>
                       </div>
-                    )}
-                  </div>
+                      <button 
+                        onClick={onToggleLockAll}
+                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${
+                          allLocked 
+                            ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.1)]' 
+                            : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                        }`}
+                      >
+                        {allLocked ? 'Unlock All' : 'Lock All'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
                  <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-zinc-950">
-                    <div className="grid grid-cols-3 lg:flex lg:flex-row min-w-full lg:min-w-0 flex-1">
+                    <div className="grid grid-cols-3 md:flex md:flex-row min-w-full md:min-w-0 flex-1">
                     {system.steps.map((step) => {
                       const isImmutable = isBaseSystem;
                       const contrastTextColor = step.contrastOnBlack > step.contrastOnWhite ? 'text-black' : 'text-white';
@@ -381,7 +450,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                       return (
                         <div 
                           key={step.id} 
-                          className={`group relative h-24 lg:h-52 lg:flex-1 transition-all ${isImmutable ? 'cursor-default' : 'cursor-default'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
+                          className={`group relative h-20 md:h-32 md:flex-1 transition-all ${isImmutable ? 'cursor-default' : 'cursor-default'} ${step.isLocked && !isImmutable ? 'z-20 ring-2 ring-indigo-500 ring-inset shadow-[0_0_30px_rgba(99,102,241,0.3)]' : ''}`}
                           style={{ backgroundColor: step.hex }}
                         >
                            <div className={`absolute inset-0 flex flex-col justify-between p-3 sm:p-4 pointer-events-none`}>
@@ -488,6 +557,84 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                     })}
                     </div>
                  </div>
+
+              {/* SNAPSHOTS SECTION */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <h2 className="text-lg lg:text-xl font-bold tracking-tight text-white">
+                    Snapshots <span className="text-white font-bold">History</span>
+                  </h2>
+                  <button 
+                    onClick={() => setIsSnapshotNamingOpen(true)}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center gap-2"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Capture State
+                  </button>
+                </div>
+                
+                {snapshots.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-6 text-center space-y-2 bg-zinc-900/30 border border-white/5 rounded-[1.5rem] p-4 md:p-5">
+                    <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center text-zinc-700">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-zinc-400 font-bold text-[10px]">No snapshots yet</p>
+                      <p className="text-zinc-600 text-[9px]">Capture the current color state to save it as a snapshot.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                    {snapshots.map(snapshot => (
+                      <div 
+                        key={snapshot.id}
+                        className="group relative bg-zinc-950 border border-zinc-800 hover:border-indigo-500/50 rounded-xl p-2.5 transition-all cursor-pointer hover:shadow-xl hover:shadow-indigo-500/10"
+                        onClick={() => onRestoreSnapshot(snapshot.id)}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-black text-white truncate pr-6 uppercase tracking-widest">{snapshot.name}</span>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteSnapshot(snapshot.id);
+                            }}
+                            className="absolute top-2 right-2 p-1 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all bg-zinc-900 rounded-md"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                        
+                        <div className="flex gap-0.5 h-6 rounded-lg overflow-hidden bg-zinc-900 p-0.5">
+                          {snapshot.systems.filter(s => s.type !== 'base').map(s => (
+                            <div 
+                              key={s.id} 
+                              className="flex-1 rounded-[1px]" 
+                              style={{ backgroundColor: s.steps.find(st => st.id === 500)?.hex || s.steps[0].hex }} 
+                              title={s.name}
+                            />
+                          ))}
+                        </div>
+                        
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">
+                            {snapshot.systems.length} Systems
+                          </span>
+                          <div className="flex items-center gap-1 text-indigo-400 opacity-0 group-hover:opacity-100 transition-all">
+                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
             </div>
@@ -523,6 +670,15 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
           onDeleteSemantic={onDeleteSemantic}
         />
       </div>
+
+      <SnapshotNamingModal 
+        isOpen={isSnapshotNamingOpen}
+        onClose={() => setIsSnapshotNamingOpen(false)}
+        onSave={(name) => {
+          onSaveSnapshot(name);
+          setIsSnapshotNamingOpen(false);
+        }}
+      />
     </div>
   );
 };
