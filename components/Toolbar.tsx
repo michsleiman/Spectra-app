@@ -92,45 +92,47 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </div>
         
         <div className="flex items-center gap-4 lg:gap-5 h-full py-2">
-          <div className="flex items-center gap-3 h-full">
+          <div className="flex items-center gap-2 sm:gap-3 h-full">
             <div className="relative h-full flex items-center" ref={menuRef}>
               <button 
                 onClick={() => copyState === 'idle' && setShowFigmaMenu(!showFigmaMenu)}
-                className={`hidden sm:flex px-6 lg:px-7 py-2.5 text-[10px] lg:text-[11px] font-black uppercase tracking-widest rounded-full transition-all border items-center gap-3.5 ${
+                className={`flex px-3 sm:px-6 lg:px-7 py-2 sm:py-2.5 text-[9px] sm:text-[10px] lg:text-[11px] font-black uppercase tracking-widest rounded-full transition-all border items-center gap-2 sm:gap-3.5 ${
                   copyState === 'copied' 
                     ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
                     : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
                 }`}
               >
                 <FigmaLogo />
-                {copyState === 'copied' ? (
-                  <>
-                    <span className="animate-in fade-in slide-in-from-left-2 duration-300">Copied to Figma</span>
-                    <svg className="w-4 h-4 ml-0.5 animate-in zoom-in duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </>
-                ) : (
-                  <span>Copy to Figma</span>
-                )}
+                <span className={copyState === 'copied' ? '' : 'hidden xs:inline'}>
+                  {copyState === 'copied' ? (
+                    <span className="flex items-center gap-1">
+                      <span className="animate-in fade-in slide-in-from-left-2 duration-300">Copied</span>
+                      <svg className="w-3 h-3 sm:w-4 sm:h-4 animate-in zoom-in duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                  ) : (
+                    <span>Figma</span>
+                  )}
+                </span>
               </button>
 
               {showFigmaMenu && (
-                <div className="absolute top-full right-0 mt-3 min-w-[160px] bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                <div className="absolute top-full right-0 mt-3 min-w-[140px] sm:min-w-[160px] bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
                   <div className="p-2 space-y-1">
                     <button 
                       onClick={() => handleCopy('light')}
-                      className="w-full flex items-center gap-3 px-3 py-3 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors group"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-3 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors group"
                     >
-                      <div className="w-4 h-4 rounded bg-white border border-zinc-700 flex-shrink-0" />
-                      <span className="text-[11px] font-bold">Light Mode</span>
+                      <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-white border border-zinc-700 flex-shrink-0" />
+                      <span className="text-[10px] sm:text-[11px] font-bold">Light Mode</span>
                     </button>
                     <button 
                       onClick={() => handleCopy('dark')}
-                      className="w-full flex items-center gap-3 px-3 py-3 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors group"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-3 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors group"
                     >
-                      <div className="w-4 h-4 rounded bg-zinc-950 border border-zinc-800 flex-shrink-0" />
-                      <span className="text-[11px] font-bold">Dark Mode</span>
+                      <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-zinc-950 border border-zinc-800 flex-shrink-0" />
+                      <span className="text-[10px] sm:text-[11px] font-bold">Dark Mode</span>
                     </button>
                   </div>
                 </div>
@@ -139,9 +141,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
             <button 
               onClick={onExport}
-              className="hidden sm:block px-6 lg:px-8 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] lg:text-[11px] font-black uppercase tracking-widest rounded-full transition-colors shadow-lg shadow-indigo-600/20 border border-indigo-500/50"
+              className="px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] sm:text-[10px] lg:text-[11px] font-black uppercase tracking-widest rounded-full transition-colors shadow-lg shadow-indigo-600/20 border border-indigo-500/50"
             >
-              Export Variables
+              <span className="hidden xs:inline">Export</span>
+              <span className="xs:hidden">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </span>
             </button>
           </div>
         </div>

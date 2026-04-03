@@ -45,9 +45,9 @@ const SnapshotNamingModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[2rem] p-8 shadow-2xl animate-in zoom-in-95 duration-200">
-        <h3 className="text-xl font-bold text-white mb-2">Save Snapshot</h3>
-        <p className="text-zinc-500 text-sm mb-6">Give your current color state a name to save it to your history.</p>
+      <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+        <h3 className="text-lg sm:text-xl font-bold text-white mb-2">Save Snapshot</h3>
+        <p className="text-zinc-500 text-xs sm:text-sm mb-6">Give your current color state a name to save it to your history.</p>
         
         <input
           ref={inputRef}
@@ -55,7 +55,7 @@ const SnapshotNamingModal: React.FC<{
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Dark Mode V2"
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-6"
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl sm:rounded-2xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-6 text-sm sm:text-base"
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               onSave(name);
@@ -65,10 +65,10 @@ const SnapshotNamingModal: React.FC<{
           }}
         />
         
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl text-sm font-bold transition-all"
+            className="w-full sm:flex-1 px-4 py-3 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold transition-all"
           >
             Cancel
           </button>
@@ -77,7 +77,7 @@ const SnapshotNamingModal: React.FC<{
               onSave(name);
               setName('');
             }}
-            className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20"
+            className="w-full sm:flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98]"
           >
             Save Snapshot
           </button>
@@ -99,50 +99,50 @@ const ScaleInfoModal: React.FC<{
       onClick={onClose}
     >
       <div 
-        className="bg-zinc-900 border border-zinc-800 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
+        className="bg-zinc-900 border border-zinc-800 w-full max-w-lg rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 relative z-10 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-8 border-b border-zinc-800 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white tracking-tight">Scale Adjustments</h2>
+        <div className="p-6 sm:p-8 border-b border-zinc-800 flex items-center justify-between shrink-0">
+          <h2 className="text-lg sm:text-2xl font-bold text-white tracking-tight">Scale Adjustments</h2>
           <button 
             onClick={onClose}
             className="p-2 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-xl transition-all"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <div className="p-8 space-y-8 overflow-y-auto max-h-[70vh] custom-scrollbar">
-          <div className="space-y-3">
-            <h4 className="text-indigo-400 text-[11px] font-black uppercase tracking-widest">Luminance Punch</h4>
-            <p className="text-zinc-400 text-sm leading-relaxed">
+        <div className="p-6 sm:p-8 space-y-6 sm:space-y-8 overflow-y-auto custom-scrollbar">
+          <div className="space-y-2 sm:space-y-3">
+            <h4 className="text-indigo-400 text-[10px] sm:text-[11px] font-black uppercase tracking-widest">Luminance Punch</h4>
+            <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
               Boosts chroma (saturation) in the middle of the scale. This makes your midtones more vibrant and "punchy" without affecting the pure white and deep black ends of the palette.
             </p>
           </div>
-          <div className="space-y-3">
-            <h4 className="text-indigo-400 text-[11px] font-black uppercase tracking-widest">Atmospheric Drift</h4>
-            <p className="text-zinc-400 text-sm leading-relaxed">
+          <div className="space-y-2 sm:space-y-3">
+            <h4 className="text-indigo-400 text-[10px] sm:text-[11px] font-black uppercase tracking-widest">Atmospheric Drift</h4>
+            <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
               Rotates the hue between the light and dark ends of the scale. This simulates natural lighting conditions where shadows and highlights often have slightly different color temperatures.
             </p>
           </div>
-          <div className="space-y-3">
-            <h4 className="text-indigo-400 text-[11px] font-black uppercase tracking-widest">Curve Steepness</h4>
-            <p className="text-zinc-400 text-sm leading-relaxed">
+          <div className="space-y-2 sm:space-y-3">
+            <h4 className="text-indigo-400 text-[10px] sm:text-[11px] font-black uppercase tracking-widest">Curve Steepness</h4>
+            <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
               Adjusts the lightness distribution. Higher values create a steeper curve, pushing more colors towards the light and dark extremes and creating higher contrast in the mid-range.
             </p>
           </div>
-          <div className="space-y-3">
-            <h4 className="text-indigo-400 text-[11px] font-black uppercase tracking-widest">Black Point</h4>
-            <p className="text-zinc-400 text-sm leading-relaxed">
+          <div className="space-y-2 sm:space-y-3">
+            <h4 className="text-indigo-400 text-[10px] sm:text-[11px] font-black uppercase tracking-widest">Black Point</h4>
+            <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
               Sets the floor for the darkest color in your scale. Increasing this value prevents the scale from reaching pure black, which is useful for creating softer, more modern UI themes.
             </p>
           </div>
         </div>
-        <div className="p-8 bg-zinc-950/50 border-t border-zinc-800">
+        <div className="p-6 sm:p-8 bg-zinc-950/50 border-t border-zinc-800 shrink-0">
           <button 
             onClick={onClose}
-            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-indigo-600/20"
+            className="w-full py-3 sm:py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98]"
           >
             Got it
           </button>
@@ -293,9 +293,9 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
               {!isBaseSystem && (
                 <div className="w-full">
                   <div className="bg-zinc-950 sm:rounded-[2rem] p-0 sm:p-5 sm:border sm:border-zinc-800 shadow-2xl relative overflow-hidden flex flex-col h-full">
-                    <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 lg:gap-8 flex-1">
+                    <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1">
                       
-                      <div className="lg:col-span-3 sticky top-0 z-30 lg:relative lg:top-auto flex flex-col h-full">
+                      <div className="lg:col-span-3 sticky top-0 z-30 lg:relative lg:top-auto flex flex-col h-full bg-zinc-950 lg:bg-transparent pb-4 lg:pb-0">
                         <div className="bg-zinc-950 lg:bg-transparent lg:border-0 p-0 lg:p-0 flex flex-col flex-1">
                            <div 
                              className="w-full min-h-[100px] lg:flex-1 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500 group/preview"
@@ -433,7 +433,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         </div>
                       </div>
 
-                      <div className="lg:col-span-3 px-0 pt-12 pb-4 lg:p-0 space-y-3 lg:space-y-4 border-t lg:border-t-0 lg:border-l border-zinc-900/50 lg:pl-6">
+                      <div className="lg:col-span-3 px-0 pt-8 pb-4 lg:p-0 space-y-3 lg:space-y-4 border-t lg:border-t-0 lg:border-l border-zinc-900/50 lg:pl-6">
                         <div className="flex items-center justify-between mb-0.5">
                           <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600">Scale Adjustment</h3>
                           <button 
@@ -503,7 +503,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                 </div>
               </div>
                  <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-zinc-950">
-                    <div className="grid grid-cols-3 md:flex md:flex-row min-w-full md:min-w-0 flex-1">
+                    <div className="grid grid-cols-2 xs:grid-cols-3 md:flex md:flex-row min-w-full md:min-w-0 flex-1">
                     {system.steps.map((step) => {
                       const isImmutable = isBaseSystem;
                       const contrastTextColor = step.contrastOnBlack > step.contrastOnWhite ? 'text-black' : 'text-white';

@@ -127,8 +127,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             </svg>
           </button>
         )}
-        <div className="w-full flex justify-center">
-            <svg width="220" height="55" viewBox="0 0 600 150" fill="none" xmlns="http://www.w3.org/2000/svg" className="max-w-full h-auto overflow-visible">
+        <div className="w-full flex justify-center px-4">
+            <svg width="180" height="45" viewBox="0 0 600 150" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-[200px] h-auto overflow-visible">
                 <defs>
                     <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{stopColor: '#FF4D4D', stopOpacity: 1}} /> 
@@ -388,11 +388,11 @@ const SemanticRow: React.FC<{
 
       {!isEditing && (
         <div className="flex items-center gap-1 shrink-0">
-          <div className="relative w-24">
+          <div className="relative w-20 sm:w-24">
             <select 
               value={displaySystemType}
               onChange={(e) => onUpdate(sem.id, e.target.value as SystemType, currentStep)}
-              className="w-full h-8 bg-zinc-900 border border-zinc-800 text-[9px] font-black uppercase tracking-widest px-2 rounded-lg outline-none appearance-none cursor-pointer text-zinc-400 hover:border-zinc-700 transition-colors"
+              className="w-full h-8 bg-zinc-900 border border-zinc-800 text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-1 sm:px-2 rounded-lg outline-none appearance-none cursor-pointer text-zinc-400 hover:border-zinc-700 transition-colors"
             >
               {systems.map(sys => (
                 <option key={sys.id} value={sys.type} className="bg-zinc-950 text-white">
@@ -402,7 +402,7 @@ const SemanticRow: React.FC<{
             </select>
           </div>
           
-          <div className="relative w-14">
+          <div className="relative w-12 sm:w-14">
             <select 
               value={currentStep}
               onChange={(e) => {
@@ -411,7 +411,7 @@ const SemanticRow: React.FC<{
                 const systemToUse = (val === 'white' || val === 'black') ? 'base' : sem.systemType;
                 onUpdate(sem.id, systemToUse as SystemType, step as any);
               }}
-              className="w-full h-8 bg-zinc-900 border border-zinc-800 text-[9px] font-mono font-black px-1 rounded-lg outline-none appearance-none cursor-pointer text-zinc-400 hover:border-zinc-700 transition-colors text-center"
+              className="w-full h-8 bg-zinc-900 border border-zinc-800 text-[8px] sm:text-[9px] font-mono font-black px-0.5 rounded-lg outline-none appearance-none cursor-pointer text-zinc-400 hover:border-zinc-700 transition-colors text-center"
             >
               <option value="white" className="bg-zinc-950 text-white">W</option>
               {steps.map(s => (
