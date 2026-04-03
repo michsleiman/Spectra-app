@@ -8,7 +8,6 @@ import MainCanvas from './components/MainCanvas';
 import Toolbar from './components/Toolbar';
 import AIPromptModal from './components/AIPromptModal';
 import ExportModal from './components/ExportModal';
-import SnapshotModal from './components/SnapshotModal';
 
 const DEFAULT_CONTROLS: SystemControls = {
   punch: 0.15,
@@ -88,7 +87,6 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<ThemeMode>('dark');
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [snapshots, setSnapshots] = useState<Snapshot[]>(() => {
     const saved = localStorage.getItem('spectra-snapshots');
@@ -107,7 +105,6 @@ const App: React.FC = () => {
       systems: JSON.parse(JSON.stringify(systems)) // Deep clone
     };
     setSnapshots(prev => [newSnapshot, ...prev]);
-    setIsSnapshotModalOpen(false);
   }, [systems]);
 
   const handleRestoreSnapshot = useCallback((id: string) => {
@@ -471,7 +468,7 @@ const App: React.FC = () => {
             allLocked={activeSystem.steps.every(s => s.isLocked)}
             onRegenerate={() => updateSystem(activeSystemId, s => s)}
             snapshots={snapshots}
-            onSaveSnapshot={() => setIsSnapshotModalOpen(true)}
+            onSaveSnapshot={handleSaveSnapshot}
             onRestoreSnapshot={handleRestoreSnapshot}
             onDeleteSnapshot={handleDeleteSnapshot}
           />
@@ -500,13 +497,6 @@ const App: React.FC = () => {
             globalSettings: { masterControls: DEFAULT_CONTROLS } 
           }} 
           onClose={() => setIsExportModalOpen(false)} 
-        />
-      )}
-
-      {isSnapshotModalOpen && (
-        <SnapshotModal 
-          onClose={() => setIsSnapshotModalOpen(false)}
-          onSave={handleSaveSnapshot}
         />
       )}
     </div>
