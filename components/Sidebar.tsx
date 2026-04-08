@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ColorSystem, SystemType, SemanticToken, ThemeMode } from '../types';
+import { Reorder, useDragControls } from 'motion/react';
+import { GripVertical, Trash2, Plus, Sparkles, Edit3, Check, X, ChevronRight } from 'lucide-react';
 
 interface SidebarProps {
   viewMode: 'scales' | 'semantics';
@@ -7,6 +9,7 @@ interface SidebarProps {
   activeSystemId: string;
   onSelectSystem: (id: string) => void;
   onDeleteSystem: (id: string) => void;
+  onReorderSystems: (newOrder: ColorSystem[]) => void;
   onAddSystem: (name: string, type: SystemType, hex: string) => void;
   onUpdateSystemName: (id: string, name: string) => void;
   onOpenAI: () => void;
@@ -25,6 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeSystemId, 
   onSelectSystem, 
   onDeleteSystem,
+  onReorderSystems,
   onAddSystem,
   onUpdateSystemName,
   onOpenAI,
@@ -204,72 +208,79 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
             )}
 
-            {systems.map(system => {
-              const isActive = system.id === activeSystemId;
-              const isEditing = editingId === system.id;
-              const previewColor = system.steps.find(s => s.id === 500)?.hex || system.steps[0].hex;
-              const isBase = system.type === 'base';
-              
-              return (
-                <div
-                  key={system.id}
-                  onClick={() => onSelectSystem(system.id)}
-                  className={`group w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all cursor-pointer relative ${
-                    isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-200'
-                  }`}
-                >
-                  <div 
-                    className={`w-3 h-3 rounded-full border border-white/10 transition-transform flex-shrink-0 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} 
-                    style={{ backgroundColor: previewColor }}
-                  />
-                  
-                  <div className="flex-1 overflow-hidden flex items-center justify-between">
-                    {isEditing ? (
-                      <input
-                        ref={editInputRef}
-                        className="w-full bg-zinc-950 border border-indigo-500 rounded px-1.5 py-0.5 text-sm text-white focus:outline-none"
-                        value={editingName}
-                        onChange={(e) => setEditingName(e.target.value)}
-                        onBlur={handleSaveEdit}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
-                        onClick={(e) => e.stopPropagation()}
+            <Reorder.Group axis="y" values={systems} onReorder={onReorderSystems} className="space-y-1">
+              {systems.map(system => {
+                const isActive = system.id === activeSystemId;
+                const isEditing = editingId === system.id;
+                const previewColor = system.steps.find(s => s.id === 500)?.hex || system.steps[0].hex;
+                const isBase = system.type === 'base';
+                
+                return (
+                  <Reorder.Item
+                    key={system.id}
+                    value={system}
+                    className={`group w-full flex items-center gap-2 px-2 py-2 rounded-lg text-left transition-all relative ${
+                      isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-200'
+                    }`}
+                  >
+                    <div className="cursor-grab active:cursor-grabbing p-1 text-zinc-700 group-hover:text-zinc-500 transition-colors">
+                      <GripVertical size={14} />
+                    </div>
+
+                    <div 
+                      onClick={() => onSelectSystem(system.id)}
+                      className="flex-1 flex items-center gap-3 min-w-0 cursor-pointer"
+                    >
+                      <div 
+                        className={`w-3 h-3 rounded-full border border-white/10 transition-transform flex-shrink-0 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} 
+                        style={{ backgroundColor: previewColor }}
                       />
-                    ) : (
-                      <>
-                        <p className="text-sm font-medium truncate pr-2">{system.name}</p>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={(e) => handleStartEdit(e, system)}
-                            className={`transition-opacity duration-150 p-1 hover:bg-zinc-700 rounded ${
-                              isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                            }`}
-                          >
-                            <svg className="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                          {!isBase && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteSystem(system.id);
-                              }}
-                              className={`transition-opacity duration-150 p-1 hover:bg-red-900/40 rounded ${
-                                isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                              }`}
-                            >
-                              <svg className="w-3 h-3 text-zinc-500 hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                      
+                      <div className="flex-1 overflow-hidden flex items-center justify-between">
+                        {isEditing ? (
+                          <input
+                            ref={editInputRef}
+                            className="w-full bg-zinc-950 border border-indigo-500 rounded px-1.5 py-0.5 text-sm text-white focus:outline-none"
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            onBlur={handleSaveEdit}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        ) : (
+                          <>
+                            <p className="text-sm font-medium truncate pr-2">{system.name}</p>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={(e) => handleStartEdit(e, system)}
+                                className={`transition-opacity duration-150 p-1 hover:bg-zinc-700 rounded ${
+                                  isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                }`}
+                              >
+                                <Edit3 size={12} />
+                              </button>
+                              {!isBase && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteSystem(system.id);
+                                  }}
+                                  className={`transition-opacity duration-150 p-1 hover:bg-red-900/40 rounded ${
+                                    isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                  }`}
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </Reorder.Item>
+                );
+              })}
+            </Reorder.Group>
 
             <div className="mt-4 mx-2">
                <button 

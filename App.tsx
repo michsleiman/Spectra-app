@@ -159,6 +159,10 @@ const App: React.FC = () => {
     });
   }, [activeSystemId]);
 
+  const handleReorderSystems = useCallback((newOrder: ColorSystem[]) => {
+    setSystems(newOrder);
+  }, []);
+
   const handleLockStep = (stepId: number, hex: string, updateBase = false) => {
     if (activeSystem.type === 'base') return;
     const newOklch = hexToOklch(hex);
@@ -426,6 +430,7 @@ const App: React.FC = () => {
           activeSystemId={activeSystemId} 
           onSelectSystem={handleSelectSystem}
           onDeleteSystem={handleDeleteSystem}
+          onReorderSystems={handleReorderSystems}
           onOpenAI={() => setIsAIModalOpen(true)}
           onAddSystem={(name, type, hex) => {
             const id = Math.random().toString(36).substr(2, 9);
