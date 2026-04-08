@@ -155,20 +155,21 @@ const App: React.FC = () => {
     });
   }, [activeSystemId]);
 
-  const handleLockStep = (stepId: number, hex: string, clearOthers = false) => {
+  const handleLockStep = (stepId: number, hex: string, updateBase = false) => {
     if (activeSystem.type === 'base') return;
     const newOklch = hexToOklch(hex);
     
     updateSystem(activeSystemId, sys => {
       const nextSteps = sys.steps.map(s => {
         if (s.id === stepId) return { ...s, hex, oklch: newOklch, isLocked: true };
-        if (clearOthers) return { ...s, isLocked: false };
         return s;
       });
 
       return {
         ...sys,
-        steps: nextSteps
+        steps: nextSteps,
+        baseHue: updateBase ? newOklch.h : sys.baseHue,
+        baseChroma: updateBase ? newOklch.c : sys.baseChroma
       };
     });
   };

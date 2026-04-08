@@ -11,7 +11,7 @@ interface MainCanvasProps {
   semantics: SemanticToken[];
   allSystems: ColorSystem[];
   onUpdateControls: (controls: SystemControls) => void;
-  onLockStep: (id: number, hex: string, clearOthers?: boolean) => void;
+  onLockStep: (id: number, hex: string, updateBase?: boolean) => void;
   onUnlockStep: (id: number) => void;
   onToggleLockAll: () => void;
   onUpdateSemantic: (tokenId: string, systemType: SystemType, stepId: number | 'white' | 'black') => void;
@@ -345,7 +345,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                  </select>
                               </div>
                               <button 
-                                onClick={() => onLockStep(quickStep, quickColor, false)}
+                                onClick={() => onLockStep(quickStep, quickColor, true)}
                                 disabled={allLocked}
                                 className={`flex-[1.2] h-9 rounded-xl font-black text-[9px] uppercase tracking-[0.15em] transition-all whitespace-nowrap shadow-md ${
                                   allLocked 
@@ -419,7 +419,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                  </select>
                               </div>
                               <button 
-                                onClick={() => onLockStep(quickStep, quickColor, false)}
+                                onClick={() => onLockStep(quickStep, quickColor, true)}
                                 disabled={allLocked}
                                 className={`flex-[2] h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-md ${
                                   allLocked 
