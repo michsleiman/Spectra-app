@@ -42,7 +42,16 @@ export function generateScale(system: ColorSystem): ColorStep[] {
   anchorPoints.push(blackAnchor);
 
   // VIRTUAL MIDPOINT (The Seed)
-  anchorPoints.push({ id: 500, oklch: { l: 0.5, c: seedChroma, h: seedHue } });
+  const baseStepId = system.baseStepId || 500;
+  const baseL = system.baseLightness !== undefined ? system.baseLightness : 0.5;
+  
+  // Map the baseStepId to its virtualId equivalent so it aligns with the interpolation curve
+  const baseStepIdx = stepIDs.indexOf(baseStepId);
+  const baseVirtualId = baseStepIdx !== -1 
+    ? 50 + (baseStepIdx / (stepIDs.length - 1)) * 900 
+    : 500;
+
+  anchorPoints.push({ id: baseVirtualId, oklch: { l: baseL, c: seedChroma, h: seedHue } });
 
   anchorPoints.sort((a, b) => a.id - b.id);
 

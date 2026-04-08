@@ -31,6 +31,8 @@ const createSystem = (id: string, name: string, type: SystemType, hue: number, c
       description: "Immutable fundamental base colors.",
       baseHue: hue,
       baseChroma: chroma,
+      baseLightness: 0.5,
+      baseStepId: 500,
       controls: controls,
       stepCount: 2,
       steps: [
@@ -63,6 +65,8 @@ const createSystem = (id: string, name: string, type: SystemType, hue: number, c
     description: `Professional ${name} scale optimized for UI layering.`,
     baseHue: hue,
     baseChroma: chroma,
+    baseLightness: 0.5,
+    baseStepId: 500,
     controls: controls,
     stepCount: 11,
     steps: []
@@ -161,7 +165,10 @@ const App: React.FC = () => {
     
     updateSystem(activeSystemId, sys => {
       const nextSteps = sys.steps.map(s => {
-        if (s.id === stepId) return { ...s, hex, oklch: newOklch, isLocked: true };
+        if (s.id === stepId) {
+          // If we are updating the base (from Perceptual Matrix), we don't lock the step
+          return { ...s, hex, oklch: newOklch, isLocked: updateBase ? s.isLocked : true };
+        }
         return s;
       });
 
@@ -169,7 +176,9 @@ const App: React.FC = () => {
         ...sys,
         steps: nextSteps,
         baseHue: updateBase ? newOklch.h : sys.baseHue,
-        baseChroma: updateBase ? newOklch.c : sys.baseChroma
+        baseChroma: updateBase ? newOklch.c : sys.baseChroma,
+        baseLightness: updateBase ? newOklch.l : sys.baseLightness,
+        baseStepId: updateBase ? stepId : sys.baseStepId
       };
     });
   };

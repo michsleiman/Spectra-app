@@ -34,6 +34,8 @@ export interface ColorSystem {
   controls: SystemControls;
   baseHue: number;    
   baseChroma: number; 
+  baseLightness?: number;
+  baseStepId?: number;
   stepCount: number;
 }
 
