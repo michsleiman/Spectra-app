@@ -117,7 +117,10 @@ export function generateScale(system: ColorSystem): ColorStep[] {
     const gamutLimiter = Math.sin(l * Math.PI);
     const finalC = c * Math.pow(gamutLimiter, 0.45);
 
-    const finalOklch: OKLCH = { l, c: finalC, h };
+    const finalOklch: OKLCH = (id === baseStepId)
+      ? { l: baseL, c: seedChroma, h: seedHue }
+      : { l, c: finalC, h };
+
     let hex = oklchToHex(finalOklch);
 
     // USER OVERRIDE: Neutral 50 should be #F6F6F6
