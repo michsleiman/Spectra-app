@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from './Button';
 import { checkTrialStatus, submitWaitlist, interpretIntent } from '../services/geminiService';
 import { AIResponse } from '../types';
 
@@ -126,7 +127,9 @@ const AIPromptModal: React.FC<AIPromptModalProps> = ({ onClose, onApply }) => {
               </p>
             </div>
           </div>
-          <button 
+          <Button 
+            variant="ghost"
+            size="icon"
             onClick={onClose} 
             className="p-2 -mr-1 text-zinc-600 hover:text-white transition-colors rounded-full hover:bg-zinc-800 focus:outline-none"
             aria-label="Close modal"
@@ -134,7 +137,7 @@ const AIPromptModal: React.FC<AIPromptModalProps> = ({ onClose, onApply }) => {
             <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         <div className="px-6 py-6 pt-2 sm:px-10 sm:py-10 sm:pt-4 overflow-y-auto custom-scrollbar">
@@ -175,16 +178,21 @@ const AIPromptModal: React.FC<AIPromptModalProps> = ({ onClose, onApply }) => {
                   </div>
                 )}
 
-                <button 
+                <Button 
                   type="submit"
-                  disabled={isLoading || !email.trim()}
-                  className="group w-full bg-white text-black py-4 sm:py-5 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] shadow-2xl active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3 sm:gap-4"
+                  variant="primary"
+                  fullWidth
+                  size="lg"
+                  isLoading={isLoading}
+                  disabled={!email.trim()}
+                  rightIcon={
+                    <svg className="w-3.5 h-3.5 sm:w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  }
                 >
-                  {isLoading ? 'Processing...' : 'Unlock Early Access'}
-                  <svg className="w-3.5 h-3.5 sm:w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </button>
+                  Unlock Early Access
+                </Button>
               </form>
             </div>
           )}
@@ -218,13 +226,15 @@ const AIPromptModal: React.FC<AIPromptModalProps> = ({ onClose, onApply }) => {
 
                   {error && <p className="text-red-400 text-xs font-bold px-1">{error}</p>}
 
-                  <button 
+                  <Button 
                     type="submit"
+                    variant="primary"
+                    fullWidth
+                    size="lg"
                     disabled={!prompt.trim()}
-                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 sm:py-5 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] shadow-[0_20px_40px_rgba(79,70,229,0.2)] active:scale-[0.98] transition-all flex items-center justify-center gap-4"
                   >
                     Generate Perceptual Palette
-                  </button>
+                  </Button>
                </form>
             </div>
           )}
@@ -274,12 +284,13 @@ const AIPromptModal: React.FC<AIPromptModalProps> = ({ onClose, onApply }) => {
                     Invitation codes are distributed in cycles. Check your inbox soon.
                   </p>
                </div>
-               <button 
+               <Button 
+                 variant="secondary"
+                 size="lg"
                  onClick={() => setStep('prompt')}
-                 className="px-10 sm:px-12 py-4 sm:py-5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl sm:rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all w-full sm:w-auto"
                >
                  Continue to Trial
-               </button>
+               </Button>
             </div>
           )}
         </div>

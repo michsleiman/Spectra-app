@@ -82,3 +82,81 @@ export interface Snapshot {
   timestamp: number;
   systems: ColorSystem[];
 }
+
+export interface TypographyStep {
+  id: string;
+  name: string;
+  fontSize: number; // px
+  lineHeight: number; // ratio (e.g., 1.5)
+  letterSpacing: number; // em (e.g., 0.05)
+  fontWeight: number; // 400, 500, etc.
+}
+
+export interface FontSystem {
+  id: string;
+  name: string;
+  family: string;
+  steps: TypographyStep[];
+}
+
+export interface TypographySemanticToken {
+  id: string;
+  name: string;
+  category: string;
+  fontSystemId: string;
+  stepId: string;
+}
+
+export interface TypographySystem {
+  fontSystems: FontSystem[];
+  baseGrid: number;
+  isGridSnapped: boolean;
+  baseRem: number;
+  scaleFactor: number;
+  isScaleSynced: boolean;
+  responsiveScale: number; // Factor for mobile scaling (e.g. 0.8)
+  isResponsiveEnabled: boolean;
+  semantics: TypographySemanticToken[];
+}
+
+export interface DimensionStep {
+  id: string;
+  name: string;
+  value: number; // in pixels
+}
+
+export interface DimensionSystem {
+  id: string;
+  name: string;
+  baseValue: number; // e.g. 4
+  scale: number[]; // e.g. [0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48, 56, 64]
+  scaleNames: Record<number, string>; // New: Mapping from scale value to display name
+  steps: DimensionStep[];
+}
+
+export interface RadiusStep {
+  id: string;
+  name: string;
+  value: number; // in pixels
+  isFull: boolean;
+}
+
+export interface RadiusSystem {
+  id: string;
+  name: string;
+  steps: RadiusStep[];
+}
+
+export interface DimensionSemanticToken {
+  id: string;
+  name: string;
+  category: string;
+  type: 'spacing' | 'radius';
+  value: number | string; // The step multiplier (e.g. 2 for 8px) or the radius step ID
+}
+
+export interface DimensionsData {
+  spacing: DimensionSystem;
+  radius: RadiusSystem;
+  semantics: DimensionSemanticToken[];
+}

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { ColorSystem, Palette, SystemType, SystemControls, AIResponse, SemanticToken, ThemeMode, Snapshot } from './types';
+import { motion, AnimatePresence } from 'motion/react';
+import { ColorSystem, Palette, SystemType, SystemControls, AIResponse, SemanticToken, ThemeMode, Snapshot, TypographySystem, DimensionsData } from './types';
 import { generateScale } from './utils/interpolation';
 import { hexToOklch } from './utils/colorUtils';
 import { generateInitialSemantics, refreshSemantics } from './utils/semanticEngine';
@@ -7,7 +8,10 @@ import Sidebar from './components/Sidebar';
 import MainCanvas from './components/MainCanvas';
 import Toolbar from './components/Toolbar';
 import AIPromptModal from './components/AIPromptModal';
-import ExportModal from './components/ExportModal';
+import UnifiedExportModal from './components/UnifiedExportModal';
+import Launcher from './components/Launcher';
+import TypographyTool, { DEFAULT_SYSTEM as DEFAULT_TYPOGRAPHY_SYSTEM } from './components/TypographyTool';
+import DimensionsTool, { DEFAULT_DIMENSIONS } from './components/DimensionsTool';
 
 const DEFAULT_CONTROLS: SystemControls = {
   punch: 0.15,
@@ -85,6 +89,7 @@ const INITIAL_SYSTEMS: ColorSystem[] = [
 ];
 
 const App: React.FC = () => {
+  const [currentTool, setCurrentTool] = useState<'launcher' | 'colors' | 'typography' | 'dimensions'>('launcher');
   const [systems, setSystems] = useState<ColorSystem[]>(INITIAL_SYSTEMS);
   const [activeSystemId, setActiveSystemId] = useState<string>(INITIAL_SYSTEMS[0].id);
   const [viewMode, setViewMode] = useState<'scales' | 'semantics'>('scales');
@@ -96,10 +101,39 @@ const App: React.FC = () => {
     const saved = localStorage.getItem('spectra-snapshots');
     return saved ? JSON.parse(saved) : [];
   });
+  const [typographySystem, setTypographySystem] = useState<TypographySystem>(() => {
+    const saved = localStorage.getItem('spectra-typography');
+    if (!saved) return DEFAULT_TYPOGRAPHY_SYSTEM;
+    try {
+      const parsed = JSON.parse(saved);
+      return { ...DEFAULT_TYPOGRAPHY_SYSTEM, ...parsed };
+    } catch (e) {
+      return DEFAULT_TYPOGRAPHY_SYSTEM;
+    }
+  });
+
+  const [dimensionsSystem, setDimensionsSystem] = useState<DimensionsData>(() => {
+    const saved = localStorage.getItem('spectra-dimensions-v9');
+    if (!saved) return DEFAULT_DIMENSIONS;
+    try {
+      const parsed = JSON.parse(saved);
+      return { ...DEFAULT_DIMENSIONS, ...parsed };
+    } catch (e) {
+      return DEFAULT_DIMENSIONS;
+    }
+  });
 
   useEffect(() => {
     localStorage.setItem('spectra-snapshots', JSON.stringify(snapshots));
   }, [snapshots]);
+
+  useEffect(() => {
+    localStorage.setItem('spectra-typography', JSON.stringify(typographySystem));
+  }, [typographySystem]);
+
+  useEffect(() => {
+    localStorage.setItem('spectra-dimensions-v9', JSON.stringify(dimensionsSystem));
+  }, [dimensionsSystem]);
 
   const handleSaveSnapshot = useCallback((name: string) => {
     const newSnapshot: Snapshot = {
@@ -412,107 +446,174 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-[100dvh] w-screen overflow-hidden bg-zinc-950 text-zinc-100 selection:bg-indigo-500/30">
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 sidebar-overlay"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      <div className={`
-        sidebar-responsive-container
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <Sidebar 
-          viewMode={viewMode}
-          systems={systems} 
-          activeSystemId={activeSystemId} 
-          onSelectSystem={handleSelectSystem}
-          onDeleteSystem={handleDeleteSystem}
-          onReorderSystems={handleReorderSystems}
-          onOpenAI={() => setIsAIModalOpen(true)}
-          onAddSystem={(name, type, hex) => {
-            const id = Math.random().toString(36).substr(2, 9);
-            const newSys = createSystem(id, name, type, hexToOklch(hex).h, hexToOklch(hex).c);
-            setSystems(prev => [...prev.slice(0, -1), newSys, prev[prev.length - 1]]);
-            setActiveSystemId(id);
-            setIsSidebarOpen(false);
-          }}
-          onUpdateSystemName={(id, name) => setSystems(prev => prev.map(s => s.id === id ? { ...s, name } : s))}
-          onCloseMobile={() => setIsSidebarOpen(false)}
-          semantics={semantics}
-          theme={theme}
-          onUpdateSemantic={handleUpdateSemantic}
-          onAddSemantic={handleAddSemantic}
-          onDeleteSemantic={handleDeleteSemantic}
-        />
-      </div>
-
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        <Toolbar 
-          paletteName="Spectra Core" 
-          viewMode={viewMode}
-          onToggleView={setViewMode}
-          onOpenAI={() => setIsAIModalOpen(true)}
-          onExport={() => setIsExportModalOpen(true)}
-          onCopyToFigma={handleCopyToFigma}
-          canUndo={false}
-          onUndo={() => {}}
-          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        />
-        
-        <div className="flex-1 relative overflow-hidden">
-          <MainCanvas 
-            viewMode={viewMode}
-            theme={theme}
-            onToggleTheme={toggleTheme}
-            system={activeSystem}
-            semantics={semantics}
-            allSystems={systems}
-            onUpdateControls={controls => updateSystem(activeSystemId, s => ({ ...s, controls }))}
-            onLockStep={handleLockStep}
-            onUnlockStep={handleUnlockStep}
-            onToggleLockAll={handleToggleLockAll}
-            onUpdateSemantic={handleUpdateSemantic}
-            onAddSemantic={handleAddSemantic}
-            onDeleteSemantic={handleDeleteSemantic}
-            onUpdateStepCount={handleUpdateStepCount}
-            allLocked={activeSystem.steps.every(s => s.isLocked)}
-            onRegenerate={() => updateSystem(activeSystemId, s => s)}
-            snapshots={snapshots}
-            onSaveSnapshot={handleSaveSnapshot}
-            onRestoreSnapshot={handleRestoreSnapshot}
-            onDeleteSnapshot={handleDeleteSnapshot}
+    <AnimatePresence mode="wait">
+      {currentTool === 'launcher' ? (
+        <motion.div
+          key="launcher"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="h-full w-full"
+        >
+          <Launcher onSelectTool={(tool) => setCurrentTool(tool as any)} />
+        </motion.div>
+      ) : currentTool === 'typography' ? (
+        <motion.div
+          key="typography"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="h-full w-full"
+        >
+          <TypographyTool 
+            onBack={() => setCurrentTool('launcher')} 
+            system={typographySystem}
+            setSystem={setTypographySystem}
+            palette={{ 
+              id: '1', 
+              name: 'Spectra Export', 
+              systems, 
+              semantics, 
+              globalSettings: { masterControls: DEFAULT_CONTROLS } 
+            }}
           />
-        </div>
-      </div>
+        </motion.div>
+      ) : currentTool === 'dimensions' ? (
+        <motion.div
+          key="dimensions"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="h-full w-full"
+        >
+          <DimensionsTool 
+            onBack={() => setCurrentTool('launcher')} 
+            system={dimensionsSystem}
+            setSystem={setDimensionsSystem}
+            palette={{ 
+              id: '1', 
+              name: 'Spectra Export', 
+              systems, 
+              semantics, 
+              globalSettings: { masterControls: DEFAULT_CONTROLS } 
+            }}
+            typographySystem={typographySystem}
+          />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="colors"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex h-[100dvh] w-screen overflow-hidden bg-zinc-950 text-zinc-100 selection:bg-indigo-500/30"
+        >
+          {isSidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 sidebar-overlay"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
 
-      {isAIModalOpen && (
-        <AIPromptModal 
-          onClose={() => setIsAIModalOpen(false)} 
-          onApply={(ai: AIResponse) => {
-            const newSystems = ai.systems.map(s => createSystem(Math.random().toString(), s.name, s.type, s.baseHue, s.baseChroma));
-            const baseSystem = systems.find(s => s.type === 'base') || createSystem('base-1', 'Base', 'base', 0, 0);
-            setSystems([...newSystems, baseSystem]);
-            setIsAIModalOpen(false);
-          }}
-        />
-      )}
+          <div className={`
+            sidebar-responsive-container
+            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}>
+            <Sidebar 
+              viewMode={viewMode}
+              systems={systems} 
+              activeSystemId={activeSystemId} 
+              onSelectSystem={handleSelectSystem}
+              onDeleteSystem={handleDeleteSystem}
+              onReorderSystems={handleReorderSystems}
+              onOpenAI={() => setIsAIModalOpen(true)}
+              onAddSystem={(name, type, hex) => {
+                const id = Math.random().toString(36).substr(2, 9);
+                const newSys = createSystem(id, name, type, hexToOklch(hex).h, hexToOklch(hex).c);
+                setSystems(prev => [...prev.slice(0, -1), newSys, prev[prev.length - 1]]);
+                setActiveSystemId(id);
+                setIsSidebarOpen(false);
+              }}
+              onUpdateSystemName={(id, name) => setSystems(prev => prev.map(s => s.id === id ? { ...s, name } : s))}
+              onCloseMobile={() => setIsSidebarOpen(false)}
+              onBackToLauncher={() => setCurrentTool('launcher')}
+              semantics={semantics}
+              theme={theme}
+              onUpdateSemantic={handleUpdateSemantic}
+              onAddSemantic={handleAddSemantic}
+              onDeleteSemantic={handleDeleteSemantic}
+            />
+          </div>
 
-      {isExportModalOpen && (
-        <ExportModal 
-          palette={{ 
-            id: '1', 
-            name: 'Spectra Export', 
-            systems, 
-            semantics, 
-            globalSettings: { masterControls: DEFAULT_CONTROLS } 
-          }} 
-          onClose={() => setIsExportModalOpen(false)} 
-        />
+          <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+            <Toolbar 
+              paletteName="Spectra Core" 
+              viewMode={viewMode}
+              onToggleView={setViewMode}
+              onOpenAI={() => setIsAIModalOpen(true)}
+              onExport={() => setIsExportModalOpen(true)}
+              onCopyToFigma={handleCopyToFigma}
+              canUndo={false}
+              onUndo={() => {}}
+              onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            />
+            
+            <div className="flex-1 relative overflow-hidden">
+              <MainCanvas 
+                viewMode={viewMode}
+                theme={theme}
+                onToggleTheme={toggleTheme}
+                system={activeSystem}
+                semantics={semantics}
+                allSystems={systems}
+                onUpdateControls={controls => updateSystem(activeSystemId, s => ({ ...s, controls }))}
+                onLockStep={handleLockStep}
+                onUnlockStep={handleUnlockStep}
+                onToggleLockAll={handleToggleLockAll}
+                onUpdateSemantic={handleUpdateSemantic}
+                onAddSemantic={handleAddSemantic}
+                onDeleteSemantic={handleDeleteSemantic}
+                onUpdateStepCount={handleUpdateStepCount}
+                allLocked={activeSystem.steps.every(s => s.isLocked)}
+                onRegenerate={() => updateSystem(activeSystemId, s => s)}
+                snapshots={snapshots}
+                onSaveSnapshot={handleSaveSnapshot}
+                onRestoreSnapshot={handleRestoreSnapshot}
+                onDeleteSnapshot={handleDeleteSnapshot}
+              />
+            </div>
+          </div>
+
+          {isAIModalOpen && (
+            <AIPromptModal 
+              onClose={() => setIsAIModalOpen(false)} 
+              onApply={(ai: AIResponse) => {
+                const newSystems = ai.systems.map(s => createSystem(Math.random().toString(), s.name, s.type, s.baseHue, s.baseChroma));
+                const baseSystem = systems.find(s => s.type === 'base') || createSystem('base-1', 'Base', 'base', 0, 0);
+                setSystems([...newSystems, baseSystem]);
+                setIsAIModalOpen(false);
+              }}
+            />
+          )}
+
+          {isExportModalOpen && (
+            <UnifiedExportModal 
+              palette={{ 
+                id: '1', 
+                name: 'Spectra Export', 
+                systems, 
+                semantics, 
+                globalSettings: { masterControls: DEFAULT_CONTROLS } 
+              }} 
+              typographySystem={typographySystem}
+              dimensionsSystem={dimensionsSystem}
+              onClose={() => setIsExportModalOpen(false)} 
+              initialTools={['colors']}
+            />
+          )}
+        </motion.div>
       )}
-    </div>
+    </AnimatePresence>
   );
 };
 

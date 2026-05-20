@@ -74,9 +74,9 @@ const PlaygroundView: React.FC<PlaygroundViewProps> = ({
 
   // Helper to construct semantic shadows
   const getShadow = (opacity: number = 0.1) => {
-    const color = get('shadow-color');
-    // Convert hex to rgba for opacity if needed, or just use the hex if it's already dark
-    return `0 4px 20px ${color}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`;
+    return theme === 'light' 
+      ? `0 10px 30px rgba(0,0,0,${opacity})` 
+      : `0 10px 30px rgba(0,0,0,0.5)`;
   };
 
   const isCompact = density === 'compact';
@@ -226,7 +226,7 @@ const PlaygroundView: React.FC<PlaygroundViewProps> = ({
               
               {/* CHART / MAIN FEED */}
               <div className="lg:col-span-2 space-y-6">
-                <SpecWrapper tokens={['bg-secondary', 'border-subtle', 'text-secondary', 'bg-brand', 'bg-brand-subtle', 'viz-grid']}>
+                <SpecWrapper tokens={['bg-secondary', 'border-subtle', 'text-secondary', 'bg-brand', 'bg-brand-subtle']}>
                   <div className={`rounded-[2.5rem] border flex flex-col ${isCompact ? 'p-6' : 'p-10'}`} style={{ backgroundColor: get('bg-secondary'), borderColor: get('border-subtle'), boxShadow: getShadow(0.05) }}>
                     <div className="flex items-center justify-between mb-6">
                       <SpecWrapper tokens={['text-secondary']}>
@@ -247,7 +247,7 @@ const PlaygroundView: React.FC<PlaygroundViewProps> = ({
                         {/* Grid Lines */}
                         <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                           {[0, 1, 2].map(i => (
-                            <div key={i} className="w-full h-px" style={{ backgroundColor: get('viz-grid') }} />
+                            <div key={i} className="w-full h-px" style={{ backgroundColor: get('border-subtle'), opacity: 0.5 }} />
                           ))}
                         </div>
                         

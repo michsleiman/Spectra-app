@@ -1,4 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { Button } from './Button';
+import { ChevronDown, Download, Check } from 'lucide-react';
 
 interface ToolbarProps {
   paletteName: string;
@@ -39,27 +42,21 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onToggleView,
   onToggleSidebar
 }) => {
-  const [showFigmaMenu, setShowFigmaMenu] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [exportState, setExportState] = useState<'idle' | 'success'>('idle');
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowFigmaMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleCopy = async (mode: 'light' | 'dark') => {
-    const success = await onCopyToFigma(mode);
+  const handleCopy = async () => {
+    const success = await onCopyToFigma('light');
     if (success) {
       setCopyState('copied');
-      setShowFigmaMenu(false);
       setTimeout(() => setCopyState('idle'), 2500);
     }
+  };
+
+  const handleExportClick = () => {
+    onExport();
+    setExportState('success');
+    setTimeout(() => setExportState('idle'), 2000);
   };
 
   return (
@@ -75,81 +72,66 @@ const Toolbar: React.FC<ToolbarProps> = ({
             </svg>
           </button>
 
-          <nav className="flex bg-zinc-900 p-1.5 rounded-full border border-zinc-800 shrink-0">
+          <div className="flex bg-zinc-900/50 p-1 rounded-full border border-zinc-800/50 relative overflow-hidden shrink-0">
+            <motion.div
+              className="absolute bg-zinc-800 border border-zinc-700/50 rounded-full shadow-lg"
+              initial={false}
+              animate={{
+                x: viewMode === 'scales' ? 0 : 120,
+                width: '120px',
+                height: '32px'
+              }}
+              transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+            />
+            
             <button 
               onClick={() => onToggleView('scales')}
-              className={`px-4 lg:px-7 py-2 rounded-full text-[10px] lg:text-[11px] font-black uppercase tracking-widest transition-all ${viewMode === 'scales' ? 'bg-zinc-800 text-indigo-400 shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-300'}`}
+              className={`relative z-10 w-[120px] h-8 flex items-center justify-center gap-2 transition-colors duration-300 ${
+                viewMode === 'scales' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'
+              }`}
             >
-              Scales
+              <span className="text-[10px] lg:text-[11px] font-black uppercase tracking-widest">Scales</span>
             </button>
             <button 
               onClick={() => onToggleView('semantics')}
-              className={`px-4 lg:px-7 py-2 rounded-full text-[10px] lg:text-[11px] font-black uppercase tracking-widest transition-all ${viewMode === 'semantics' ? 'bg-zinc-800 text-indigo-400 shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-300'}`}
+              className={`relative z-10 w-[120px] h-8 flex items-center justify-center gap-2 transition-colors duration-300 ${
+                viewMode === 'semantics' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'
+              }`}
             >
-              Semantics
+              <span className="text-[10px] lg:text-[11px] font-black uppercase tracking-widest">Live Preview</span>
             </button>
-          </nav>
+          </div>
         </div>
         
         <div className="flex items-center gap-4 lg:gap-5 h-full py-2">
           <div className="flex items-center gap-2 sm:gap-3 h-full">
-            <div className="relative h-full flex items-center" ref={menuRef}>
-              <button 
-                onClick={() => copyState === 'idle' && setShowFigmaMenu(!showFigmaMenu)}
-                className={`flex px-3 sm:px-6 lg:px-7 py-2 sm:py-2.5 text-[9px] sm:text-[10px] lg:text-[11px] font-black uppercase tracking-widest rounded-full transition-all border items-center gap-2 sm:gap-3.5 ${
-                  copyState === 'copied' 
-                    ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
-                    : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
-                }`}
+            <div className="relative h-full flex items-center">
+              <Button 
+                variant={copyState === 'copied' ? 'secondary' : 'secondary'}
+                onClick={() => copyState === 'idle' && handleCopy()}
+                leftIcon={copyState === 'copied' ? <Check className="w-4 h-4 text-emerald-400" strokeWidth={3} /> : <FigmaLogo />}
+                className={copyState === 'copied' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : ''}
               >
-                <FigmaLogo />
                 <span className={copyState === 'copied' ? '' : 'hidden xs:inline'}>
-                  {copyState === 'copied' ? (
-                    <span className="flex items-center gap-1">
-                      <span className="animate-in fade-in slide-in-from-left-2 duration-300">Copied</span>
-                      <svg className="w-3 h-3 sm:w-4 sm:h-4 animate-in zoom-in duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                  ) : (
-                    <span>Figma</span>
-                  )}
+                  {copyState === 'copied' ? 'Copied' : 'Figma layout'}
                 </span>
-              </button>
-
-              {showFigmaMenu && (
-                <div className="absolute top-full right-0 mt-3 min-w-[140px] sm:min-w-[160px] bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                  <div className="p-2 space-y-1">
-                    <button 
-                      onClick={() => handleCopy('light')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-3 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors group"
-                    >
-                      <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-white border border-zinc-700 flex-shrink-0" />
-                      <span className="text-[10px] sm:text-[11px] font-bold">Light Mode</span>
-                    </button>
-                    <button 
-                      onClick={() => handleCopy('dark')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 sm:py-3 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors group"
-                    >
-                      <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-zinc-950 border border-zinc-800 flex-shrink-0" />
-                      <span className="text-[10px] sm:text-[11px] font-bold">Dark Mode</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+              </Button>
             </div>
 
-            <button 
-              onClick={onExport}
-              className="px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] sm:text-[10px] lg:text-[11px] font-black uppercase tracking-widest rounded-full transition-colors shadow-lg shadow-indigo-600/20 border border-indigo-500/50"
+            <Button 
+              variant="primary"
+              onClick={handleExportClick}
+              leftIcon={
+                exportState === 'success' ? (
+                  <Check className="w-4 h-4" strokeWidth={3} />
+                ) : (
+                  <Download className="w-4 h-4" strokeWidth={2.5} />
+                )
+              }
             >
-              <span className="hidden xs:inline">Export</span>
-              <span className="xs:hidden">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </span>
-            </button>
+              <span className="hidden xs:inline">{exportState === 'success' ? 'Exported' : 'Export'}</span>
+              <span className="xs:hidden">{exportState === 'success' ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}</span>
+            </Button>
           </div>
         </div>
       </div>

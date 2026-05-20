@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from './Button';
 
 interface SnapshotModalProps {
   onClose: () => void;
@@ -49,20 +50,24 @@ const SnapshotModal: React.FC<SnapshotModalProps> = ({ onClose, onSave }) => {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button 
+              <Button 
                 type="button"
+                variant="secondary"
+                size="lg"
+                className="flex-1 rounded-2xl"
                 onClick={onClose}
-                className="flex-1 px-6 py-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-black text-[10px] uppercase tracking-widest transition-all"
               >
                 Cancel
-              </button>
-              <button 
+              </Button>
+              <Button 
                 type="submit"
+                variant="primary"
+                size="lg"
+                className="flex-[2] rounded-2xl"
                 disabled={!name.trim()}
-                className="flex-[2] px-6 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20"
               >
                 Save Snapshot
-              </button>
+              </Button>
             </div>
           </form>
         </div>

@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Button } from './Button';
 import { ColorSystem, ColorStep, OKLCH, SystemControls, SemanticToken, SystemType, ThemeMode, Snapshot } from '../types';
 import { hexToOklch, oklchToHex, hexToHsl, hslToHex } from '../utils/colorUtils';
 import PlaygroundView from './PlaygroundView';
@@ -140,12 +142,13 @@ const ScaleInfoModal: React.FC<{
           </div>
         </div>
         <div className="p-6 sm:p-8 bg-zinc-950/50 border-t border-zinc-800 shrink-0">
-          <button 
+          <Button 
+            variant="primary"
+            fullWidth
             onClick={onClose}
-            className="w-full py-3 sm:py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98]"
           >
             Got it
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -280,15 +283,18 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-zinc-950">
-      <div 
-        className={`absolute inset-0 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${
-          viewMode === 'scales' 
-            ? 'opacity-100 translate-x-0' 
-            : 'opacity-0 -translate-x-12 pointer-events-none'
-        }`}
-      >
-        <main className="h-full overflow-y-auto scroll-smooth custom-scrollbar">
-          <div className="max-w-[1600px] mx-auto px-4 sm:px-12 pt-4 pb-8">
+      <AnimatePresence mode="wait">
+        {viewMode === 'scales' ? (
+          <motion.div 
+            key="scales"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            className="absolute inset-0"
+          >
+            <main className="h-full overflow-y-auto scroll-smooth custom-scrollbar">
+              <div className="max-w-[1600px] mx-auto px-4 sm:px-12 pt-4 pb-8">
             <div className="flex flex-col gap-4 lg:gap-6">
               {!isBaseSystem && (
                 <div className="w-full">
@@ -589,15 +595,13 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                   <h2 className="text-lg lg:text-xl font-bold tracking-tight text-white">
                     Snapshots <span className="text-white font-bold">History</span>
                   </h2>
-                  <button 
+                  <Button 
+                    variant="primary"
+                    size="sm"
                     onClick={() => setIsSnapshotNamingOpen(true)}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center gap-2"
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                    </svg>
                     Capture State
-                  </button>
+                  </Button>
                 </div>
                 
                 {snapshots.length === 0 ? (
@@ -683,8 +687,16 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
             )}
           </div>
         </main>
-      </div>
-      <div className={`absolute inset-0 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${viewMode === 'semantics' ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12 pointer-events-none'}`}>
+      </motion.div>
+    ) : (
+      <motion.div 
+        key="semantics"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        className="absolute inset-0"
+      >
         <PlaygroundView 
           semantics={semantics} 
           theme={theme} 
@@ -694,7 +706,9 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
           onAddSemantic={onAddSemantic}
           onDeleteSemantic={onDeleteSemantic}
         />
-      </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
 
       <SnapshotNamingModal 
         isOpen={isSnapshotNamingOpen}
@@ -755,8 +769,8 @@ const ControlSliderRaw: React.FC<{
     </div>
     <div className="relative h-2.5 rounded-full flex items-center group">
       <div className="absolute inset-0 rounded-full" style={{ background: gradient || 'rgba(255,255,255,0.05)' }} />
-      <div className="absolute w-5 h-5 bg-white rounded-full shadow-2xl border-2 border-zinc-950 pointer-events-none z-10 transition-transform group-active:scale-125" style={{ left: `calc(${(val / max) * 100}% - 10px)` }} />
-      <input type="range" min="0" max={max} step={step} value={val} onChange={(e) => onChange(parseFloat(e.target.value))} className="absolute inset-0 w-full h-full appearance-none bg-transparent cursor-pointer z-20" style={{ margin: 0 }} />
+      <div className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-2xl border-2 border-zinc-950 pointer-events-none z-10 transition-transform group-active:scale-125" style={{ left: `calc(${(val / max) * 100}% - 10px)` }} />
+      <input type="range" min="0" max={max} step={step} value={val} onChange={(e) => onChange(parseFloat(e.target.value))} className="absolute inset-0 w-full h-full appearance-none opacity-0 cursor-pointer z-20" style={{ margin: 0 }} />
     </div>
   </div>
 );

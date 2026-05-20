@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ColorSystem, SystemType, SemanticToken, ThemeMode } from '../types';
 import { Reorder, useDragControls } from 'motion/react';
-import { GripVertical, Trash2, Plus, Sparkles, Edit3, Check, X, ChevronRight } from 'lucide-react';
+import { GripVertical, Trash2, Plus, Sparkles, Edit3, Check, X, ChevronRight, LayoutGrid } from 'lucide-react';
+import { Button } from './Button';
 
 interface SidebarProps {
   viewMode: 'scales' | 'semantics';
@@ -14,6 +15,7 @@ interface SidebarProps {
   onUpdateSystemName: (id: string, name: string) => void;
   onOpenAI: () => void;
   onCloseMobile?: () => void;
+  onBackToLauncher?: () => void;
   // Semantic props
   semantics: SemanticToken[];
   theme: ThemeMode;
@@ -33,6 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onUpdateSystemName,
   onOpenAI,
   onCloseMobile,
+  onBackToLauncher,
   semantics,
   theme,
   onUpdateSemantic,
@@ -161,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <text x="180" y="94" className="logo-text">SPECTRA</text>
             </svg>
         </div>
-        <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.25em] leading-tight mt-1 text-center">Color Systems, Solved</p>
+        <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.25em] leading-tight mt-1 text-center">Design Systems, Solved</p>
       </div>
 
       <div className="p-4 flex items-center justify-between mt-2">
@@ -170,21 +173,22 @@ const Sidebar: React.FC<SidebarProps> = ({
         </h2>
         <div className="flex items-center gap-1">
           {viewMode === 'semantics' && (
-            <button 
+            <Button 
+              variant={isEditingSemantics ? 'primary' : 'ghost'}
+              size="sm"
               onClick={() => setIsEditingSemantics(!isEditingSemantics)}
-              className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg transition-all ${isEditingSemantics ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800'}`}
             >
               {isEditingSemantics ? 'Done' : 'Edit'}
-            </button>
+            </Button>
           )}
-          <button 
+          <Button 
+            variant="ghost"
+            size="icon"
             onClick={() => setIsAdding(!isAdding)}
-            className="text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all p-2 rounded-lg"
+            className="text-zinc-400 hover:text-white"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
+            <Plus className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
@@ -202,8 +206,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
                 />
                 <div className="flex gap-2">
-                  <button onClick={handleAdd} className="flex-1 bg-indigo-600 hover:bg-indigo-500 py-1.5 rounded text-xs font-semibold text-white">Add</button>
-                  <button onClick={() => setIsAdding(false)} className="flex-1 bg-zinc-700 hover:bg-zinc-600 py-1.5 rounded text-xs font-semibold text-white">Cancel</button>
+                  <Button variant="primary" size="sm" fullWidth onClick={handleAdd}>Add</Button>
+                  <Button variant="secondary" size="sm" fullWidth onClick={() => setIsAdding(false)}>Cancel</Button>
                 </div>
               </div>
             )}
@@ -283,19 +287,21 @@ const Sidebar: React.FC<SidebarProps> = ({
             </Reorder.Group>
 
             <div className="mt-4 mx-2">
-               <button 
+               <Button 
+                 variant="ai"
+                 fullWidth
                  onClick={onOpenAI}
-                 className="w-full flex items-center gap-3 px-3 py-3 border border-dashed border-zinc-800 hover:border-indigo-500/50 hover:bg-indigo-500/5 rounded-xl transition-all group"
+                 className="rounded-full py-3"
+                 leftIcon={
+                   <div className="w-3 h-3 flex items-center justify-center text-indigo-400 group-hover/ai:scale-110 transition-transform">
+                      <svg className="w-full h-full" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" />
+                      </svg>
+                   </div>
+                 }
                >
-                  <div className="w-3 h-3 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
-                     <svg className="w-full h-full" fill="currentColor" viewBox="0 0 24 24">
-                       <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" />
-                     </svg>
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-indigo-400 transition-colors">
-                    Generate with AI
-                  </span>
-               </button>
+                 Generate with AI
+               </Button>
             </div>
 
           </>
@@ -320,8 +326,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </select>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={handleAdd} className="flex-1 bg-indigo-600 hover:bg-indigo-500 py-1.5 rounded text-xs font-semibold text-white">Add</button>
-                  <button onClick={() => setIsAdding(false)} className="flex-1 bg-zinc-700 hover:bg-zinc-600 py-1.5 rounded text-xs font-semibold text-white">Cancel</button>
+                  <Button variant="primary" size="sm" fullWidth onClick={handleAdd}>Add</Button>
+                  <Button variant="secondary" size="sm" fullWidth onClick={() => setIsAdding(false)}>Cancel</Button>
                 </div>
               </div>
             )}
@@ -354,9 +360,19 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
       
-      <div className="p-4 bg-zinc-950/20 border-t border-zinc-900/50">
-        <p className="text-[10px] text-zinc-700 font-medium uppercase tracking-widest text-center">
-          SPECTRA BY <a href="https://www.michelsleiman.com/" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300 transition-colors">Michel Sleiman</a>
+      <div className="py-6 px-4 shrink-0 flex flex-col items-center gap-4">
+        {onBackToLauncher && (
+          <Button 
+            variant="tertiary"
+            fullWidth
+            onClick={onBackToLauncher}
+            leftIcon={<LayoutGrid className="w-3 h-3" />}
+          >
+            View all tools
+          </Button>
+        )}
+        <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.25em] text-center">
+          SPECTRA BY <a href="https://www.michelsleiman.com/" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-indigo-400 transition-colors">Michel Sleiman</a>
         </p>
       </div>
     </div>

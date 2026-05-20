@@ -27,7 +27,7 @@ const SEMANTICS: SemanticDefinition[] = [
   // --- BACKGROUND ---
   { id: 'bg-primary', name: 'primary', category: 'Background', systemType: 'neutral', lightStep: 'white', darkStep: 950 },
   { id: 'bg-secondary', name: 'secondary', category: 'Background', systemType: 'neutral', lightStep: 50, darkStep: 900 },
-  { id: 'bg-tertiary', name: 'tertiary', category: 'Background', systemType: 'neutral', lightStep: 'white', darkStep: 800 },
+  { id: 'bg-tertiary', name: 'tertiary', category: 'Background', systemType: 'neutral', lightStep: 100, darkStep: 800 },
   { id: 'bg-brand', name: 'brand', category: 'Background', systemType: 'brand', lightStep: 500, darkStep: 500 },
   { id: 'bg-brand-hover', name: 'brand-hover', category: 'Background', systemType: 'brand', lightStep: 600, darkStep: 400 },
   { id: 'bg-brand-subtle', name: 'brand-subtle', category: 'Background', systemType: 'brand', lightStep: 50, darkStep: 800 },
@@ -37,14 +37,11 @@ const SEMANTICS: SemanticDefinition[] = [
   { id: 'bg-warning-subtle', name: 'warning-subtle', category: 'Background', systemType: 'warning', lightStep: 50, darkStep: 800 },
   { id: 'bg-error', name: 'error', category: 'Background', systemType: 'error', lightStep: 500, darkStep: 500 },
   { id: 'bg-error-subtle', name: 'error-subtle', category: 'Background', systemType: 'error', lightStep: 50, darkStep: 800 },
-  { id: 'bg-selection', name: 'selection', category: 'Background', systemType: 'brand', lightStep: 100, darkStep: 800 },
-
   // --- BORDER ---
   { id: 'border-primary', name: 'primary', category: 'Border', systemType: 'neutral', lightStep: 400, darkStep: 600 },
   { id: 'border-secondary', name: 'secondary', category: 'Border', systemType: 'neutral', lightStep: 200, darkStep: 800 },
   { id: 'border-subtle', name: 'subtle', category: 'Border', systemType: 'neutral', lightStep: 100, darkStep: 900 },
   { id: 'border-disabled', name: 'disabled', category: 'Border', systemType: 'neutral', lightStep: 300, darkStep: 700 },
-  { id: 'border-interactive', name: 'interactive', category: 'Border', systemType: 'neutral', lightStep: 600, darkStep: 400 },
   { id: 'border-brand', name: 'brand', category: 'Border', systemType: 'brand', lightStep: 500, darkStep: 400 },
   { id: 'border-success', name: 'success', category: 'Border', systemType: 'success', lightStep: 500, darkStep: 400 },
   { id: 'border-warning', name: 'warning', category: 'Border', systemType: 'warning', lightStep: 500, darkStep: 400 },
@@ -62,16 +59,11 @@ const SEMANTICS: SemanticDefinition[] = [
   { id: 'foreground-warning', name: 'warning', category: 'Foreground', systemType: 'warning', lightStep: 500, darkStep: 400 },
   { id: 'foreground-error', name: 'error', category: 'Foreground', systemType: 'error', lightStep: 500, darkStep: 400 },
 
-  // --- SPECIALIZED ---
-  { id: 'viz-1', name: 'viz-1', category: 'Specialized', systemType: 'brand', lightStep: 500, darkStep: 400 },
-  { id: 'viz-2', name: 'viz-2', category: 'Specialized', systemType: 'neutral', lightStep: 400, darkStep: 500 },
-  { id: 'viz-3', name: 'viz-3', category: 'Specialized', systemType: 'success', lightStep: 500, darkStep: 400 },
-  { id: 'viz-grid', name: 'viz-grid', category: 'Specialized', systemType: 'neutral', lightStep: 100, darkStep: 800 },
-  { id: 'skeleton-base', name: 'skeleton-base', category: 'Specialized', systemType: 'neutral', lightStep: 100, darkStep: 800 },
-  { id: 'skeleton-shimmer', name: 'skeleton-shimmer', category: 'Specialized', systemType: 'neutral', lightStep: 50, darkStep: 700 },
-  { id: 'focus-ring', name: 'focus-ring', category: 'Specialized', systemType: 'brand', lightStep: 500, darkStep: 400 },
-  { id: 'shadow-color', name: 'shadow-color', category: 'Specialized', systemType: 'neutral', lightStep: 950, darkStep: 'black' },
-  { id: 'bg-overlay', name: 'bg-overlay', category: 'Specialized', systemType: 'neutral', lightStep: 950, darkStep: 950 },
+  // --- SPECIALIZED MOVED ---
+  { id: 'skeleton-base', name: 'skeleton-base', category: 'Background', systemType: 'neutral', lightStep: 100, darkStep: 800 },
+  { id: 'skeleton-shimmer', name: 'skeleton-shimmer', category: 'Background', systemType: 'neutral', lightStep: 50, darkStep: 700 },
+  { id: 'focus-ring', name: 'focus-ring', category: 'Border', systemType: 'brand', lightStep: 500, darkStep: 400 },
+  { id: 'bg-overlay', name: 'bg-overlay', category: 'Background', systemType: 'neutral', lightStep: 950, darkStep: 950 },
 ];
 
 function getStepLabel(type: SystemType, step: number | 'white' | 'black'): string {
