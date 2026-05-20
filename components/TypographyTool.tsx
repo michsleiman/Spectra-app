@@ -336,21 +336,7 @@ const TypeSpecWrapper: React.FC<{
   );
 };
 
-const FigmaLogo = () => (
-  <svg 
-    className="w-4 h-4 flex-shrink-0 style={{ overflow: 'visible' }}" 
-    viewBox="0 0 38 67" 
-    fill="none" 
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M19 0C8.5 0 0 8.5 0 19C0 24.5 2.5 29.5 6.5 32.5C2.5 35.5 0 40.5 0 46C0 56.5 8.5 65 19 65C29.5 65 38 56.5 38 46V19C38 8.5 29.5 0 19 0Z" fill="white" fillOpacity="0.01"/>
-    <path d="M9.5 28.5C14.7467 28.5 19 24.2467 19 19C19 13.7533 14.7467 9.5 9.5 9.5C4.25329 9.5 0 13.7533 0 19C0 24.2467 4.25329 28.5 9.5 28.5Z" fill="#F24E1E"/>
-    <path d="M28.5 28.5C33.7467 28.5 38 24.2467 38 19C38 13.7533 33.7467 9.5 28.5 9.5C23.2533 9.5 19 13.7533 19 19C19 24.2467 23.2533 28.5 28.5 28.5Z" fill="#FF7262"/>
-    <path d="M9.5 47.5C14.7467 47.5 19 43.2467 19 38C19 32.7533 14.7467 28.5 9.5 28.5C4.25329 28.5 0 32.7533 0 38C0 43.2467 4.25329 47.5 9.5 47.5Z" fill="#1ABCFE"/>
-    <path d="M9.5 66.5C14.7467 66.5 19 62.2533 19 57V47.5H9.5C4.25329 47.5 0 51.7467 0 57C0 62.2533 4.25329 66.5 9.5 66.5Z" fill="#0ACF83"/>
-    <path d="M28.5 47.5C33.7467 47.5 38 43.2467 38 38C38 32.7533 33.7467 28.5 28.5 28.5C23.2533 28.5 19 32.7533 19 38C19 43.2467 23.2533 47.5 28.5 47.5Z" fill="#A259FF"/>
-  </svg>
-);
+
 
 const SemanticTypographyRow: React.FC<{
   token: TypographySemanticToken;
@@ -582,74 +568,7 @@ const TypographyTool: React.FC<TypographyToolProps> = ({ onBack, system, setSyst
     });
   };
 
-  const [copyState, setCopyState] = React.useState<'idle' | 'success' | 'error'>('idle');
   const [exportState, setExportState] = React.useState<'idle' | 'success'>('idle');
-
-  const handleCopyToFigma = async () => {
-    setCopyState('idle');
-    
-    // Generate SVG for Figma
-    const width = 1200;
-    const headerHeight = 160;
-    const padding = 60;
-    const rowHeight = 80;
-    const families = system.fontSystems.map(fs => ({
-      name: fs.name,
-      font: fs.family,
-      steps: fs.steps
-    }));
-
-    let totalHeight = headerHeight + padding;
-    families.forEach(f => {
-      totalHeight += 60; // Family header
-      totalHeight += f.steps.length * rowHeight;
-      totalHeight += 40; // Spacer
-    });
-
-    let svg = `<?xml version="1.0" encoding="UTF-8"?>`;
-    svg += `<svg width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" fill="none" xmlns="http://www.w3.org/2000/svg">`;
-    svg += `<rect width="${width}" height="${totalHeight}" fill="#FFFFFF" />`;
-    
-    // Header
-    svg += `<text x="60" y="80" fill="#09090B" font-family="Inter, sans-serif" font-size="32" font-weight="900">TYPOGRAPHY SYSTEM</text>`;
-    svg += `<text x="60" y="110" fill="#71717A" font-family="Inter, sans-serif" font-size="12" font-weight="700" letter-spacing="0.1em">SPECTRA CORE • DESIGN TOKENS</text>`;
-    svg += `<rect x="60" y="130" width="${width - 120}" height="1" fill="#E4E4E7" />`;
-
-    let currentY = headerHeight + 20;
-
-    families.forEach(family => {
-      svg += `<text x="60" y="${currentY}" fill="#6366F1" font-family="Inter, sans-serif" font-size="11" font-weight="900" letter-spacing="0.25em" text-transform="uppercase">${family.name.toUpperCase()} — ${family.font}</text>`;
-      svg += `<rect x="60" y="${currentY + 15}" width="${width - 120}" height="1" fill="#F4F4F5" />`;
-      currentY += 60;
-
-      family.steps.forEach(step => {
-        const capName = step.name.toUpperCase();
-        svg += `<g id="${family.name}_${step.id}">`;
-        svg += `<text x="60" y="${currentY + 30}" fill="#A1A1AA" font-family="JetBrains Mono, monospace" font-size="10" font-weight="500">${step.id}</text>`;
-        svg += `<text x="120" y="${currentY + 30}" fill="#71717A" font-family="Inter, sans-serif" font-size="10" font-weight="800" letter-spacing="0.05em">${capName}</text>`;
-        svg += `<text x="320" y="${currentY + 35}" fill="#09090B" font-family="${family.font}, sans-serif" font-size="${step.fontSize}" font-weight="${step.fontWeight}" style="line-height: ${step.lineHeight}; letter-spacing: ${step.letterSpacing}em;">The quick brown fox jumps over the lazy dog</text>`;
-        
-        // Metadata
-        const meta = `${step.fontSize}px / ${Math.round(step.fontSize * step.lineHeight)}px — ${step.fontWeight}`;
-        svg += `<text x="${width - 60}" y="${currentY + 30}" fill="#A1A1AA" font-family="JetBrains Mono, monospace" font-size="10" font-weight="500" text-anchor="end">${meta}</text>`;
-        svg += `</g>`;
-        currentY += rowHeight;
-      });
-      currentY += 40;
-    });
-
-    svg += `</svg>`;
-
-    try {
-      await navigator.clipboard.writeText(svg);
-      setCopyState('success');
-      setTimeout(() => setCopyState('idle'), 2000);
-    } catch (err) {
-      console.error("Failed to copy SVG:", err);
-      setCopyState('error');
-      setTimeout(() => setCopyState('idle'), 2000);
-    }
-  };
 
   const handleExport = () => {
     const data = JSON.stringify(system, null, 2);
@@ -1126,13 +1045,6 @@ const TypographyTool: React.FC<TypographyToolProps> = ({ onBack, system, setSyst
 
             <div className="flex items-center gap-5 py-2">
                <div className="flex items-center gap-3 h-full">
-                  <Button 
-                    variant="secondary" 
-                    leftIcon={copyState === 'success' ? <Check className="w-4 h-4 text-emerald-400" /> : <FigmaLogo />}
-                    onClick={handleCopyToFigma}
-                  >
-                    {copyState === 'success' ? 'Copied' : 'Figma layout'}
-                  </Button>
                   <Button 
                     variant="primary"
                     leftIcon={exportState === 'success' ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}

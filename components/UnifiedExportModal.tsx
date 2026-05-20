@@ -26,7 +26,9 @@ const ArrowRight = ({ className }: { className?: string }) => (
 );
 
 const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typographySystem, dimensionsSystem, onClose, initialTools = ['colors', 'typography'] }) => {
-  const [selectedTools, setSelectedTools] = useState<('colors' | 'typography' | 'dimensions')[]>(initialTools);
+  const [selectedTools, setSelectedTools] = useState<('colors' | 'typography')[]>(() => {
+    return initialTools.filter(t => t === 'colors' || t === 'typography') as ('colors' | 'typography')[];
+  });
   const [view, setView] = useState<'scripter' | 'tailwind' | 'json'>('scripter');
   const [isDevMode, setIsDevMode] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -41,7 +43,7 @@ const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typogr
     setTimeout(onClose, 300);
   };
 
-  const toggleTool = (tool: 'colors' | 'typography' | 'dimensions') => {
+  const toggleTool = (tool: 'colors' | 'typography') => {
     setSelectedTools(prev => 
       prev.includes(tool) 
         ? prev.filter(t => t !== tool) 
@@ -51,7 +53,6 @@ const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typogr
 
   const totalColors = palette.systems.reduce((acc, sys) => acc + sys.steps.length, 0);
   const totalTypography = typographySystem.fontSystems.reduce((acc, fs) => acc + fs.steps.length, 0);
-  const totalDimensions = dimensionsSystem ? (dimensionsSystem.spacing.scale.length + dimensionsSystem.radius.steps.length) : 0;
   const totalModes = 2; // Fixed for now
 
   // --- Helpers for script generation ---
@@ -334,53 +335,6 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
     } catch (e) {
       console.warn("Error syncing typography style " + s.name + ":", e);
     }
-  }
-}\n\n`;
-    }
-
-    if (selectedTools.includes('dimensions') && dimensionsSystem) {
-      const semanticDimData = dimensionsSystem.semantics.map(s => {
-        let val = 0;
-        if (s.type === 'spacing') {
-          val = (s.value as number) * dimensionsSystem.spacing.baseValue;
-        } else {
-          const step = dimensionsSystem.radius.steps.find(r => r.id === s.value);
-          val = step?.value || 0;
-        }
-        return { name: `Semantics/${s.category}/${s.name}`, value: val };
-      });
-
-      const allDimData = [
-        ...dimensionsSystem.spacing.scale.map(s => {
-          const name = dimensionsSystem.spacing.scaleNames?.[s] || `${s}`;
-          return { name: `Spacing/Scale ${name}`, value: s * dimensionsSystem.spacing.baseValue };
-        }),
-        ...dimensionsSystem.radius.steps.map(s => ({ name: `Radius/${s.name}`, value: s.value })),
-        ...semanticDimData
-      ];
-
-      script += `async function createDimensions() {
-  const data = ${JSON.stringify(allDimData, null, 2)};
-  console.log("-> Syncing Dimensions...");
-  
-  const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
-  let collection = localCollections.find(c => c.name === "Dimensions");
-  if (!collection) {
-    collection = figma.variables.createVariableCollection("Dimensions");
-  }
-
-  const modeId = collection.modes[0].modeId;
-  collection.renameMode(modeId, "Value");
-
-  const localVariables = await figma.variables.getLocalVariablesAsync();
-
-  for (const item of data) {
-    let v = localVariables.find(x => x.name === item.name && x.variableCollectionId === collection.id);
-    if (!v) {
-      v = figma.variables.createVariable(item.name, collection, "FLOAT");
-      localVariables.push(v);
-    }
-    v.setValueForMode(modeId, item.value);
   }
 }\n\n`;
     }
@@ -846,58 +800,6 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
   } catch (e) { console.error("Error in typography frame generation:", e); }
   ` : ''}
 
-  ${selectedTools.includes('dimensions') ? `
-  try {
-    const dimFrame = createDocFrame("Spectra — Dimensions & Spacing", "GEOMETRIC FOUNDATION", "SPATIAL RHYTHM & CORNER CURVATURE");
-    if (framesToZoom.length > 0) {
-      dimFrame.x = framesToZoom[framesToZoom.length - 1].x + framesToZoom[framesToZoom.length - 1].width + 200;
-    }
-    framesToZoom.push(dimFrame);
-
-    const dimCollection = (await figma.variables.getLocalVariableCollectionsAsync()).find(c => c.name === "Dimensions");
-    if (dimCollection) {
-      const vars = (await figma.variables.getLocalVariablesAsync()).filter(v => v.variableCollectionId === dimCollection.id);
-      
-      for (const v of vars) {
-        const row = figma.createFrame();
-        row.name = "Dimension: " + v.name;
-        row.layoutMode = "HORIZONTAL";
-        row.primaryAxisSizingMode = "FIXED";
-        row.counterAxisSizingMode = "AUTO";
-        row.layoutAlign = "STRETCH";
-        row.itemSpacing = 24;
-        row.paddingTop = 16; row.paddingBottom = 16;
-        row.fills = [];
-        dimFrame.appendChild(row);
-
-        const info = figma.createText();
-        robustSetFont(info, JETBRAINS);
-        const val = v.valuesByMode[Object.keys(v.valuesByMode)[0]];
-        info.characters = v.name.toUpperCase() + "  —  " + val + "px";
-        info.fontSize = 11;
-        info.fills = [{ type: 'SOLID', color: { r: 0.5, g: 0.5, b: 0.5 } }];
-        row.appendChild(info);
-
-        if (v.name.includes("Spacing")) {
-          const viz = figma.createRectangle();
-          viz.resize(Math.min(val, 64), 12);
-          viz.fills = [{ type: 'SOLID', color: { r: 0.4, g: 0.4, b: 1 } }];
-          viz.opacity = 0.5;
-          row.appendChild(viz);
-        } else {
-          const viz = figma.createFrame();
-          viz.resize(32, 32); 
-          viz.cornerRadius = Math.min(val, 16); 
-          viz.strokes = [{ type: 'SOLID', color: { r: 0.4, g: 0.4, b: 1 } }];
-          viz.strokeWeight = 2;
-          viz.fills = [];
-          row.appendChild(viz);
-        }
-      }
-    }
-  } catch (e) { console.error("Error in dimensions frame generation:", e); }
-  ` : ''}
-
   if (framesToZoom.length > 0) figma.viewport.scrollAndZoomIntoView(framesToZoom);
 }\n\n`;
 
@@ -914,10 +816,6 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
     if (selectedTools.includes('typography')) {
       script += `await syncTypography();\n`;
       script += `await bindTypography();\n\n`;
-    }
-
-    if (selectedTools.includes('dimensions') && dimensionsSystem) {
-      script += `await createDimensions();\n\n`;
     }
 
     script += `await generateLayout(colorResults, primResults?.variableMap);\n\n`;
@@ -948,38 +846,13 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
       css += `\n`;
     }
 
-    if (selectedTools.includes('dimensions') && dimensionsSystem) {
-      css += `  /* Spacing Scale */\n`;
-      dimensionsSystem.spacing.scale.forEach(s => {
-        const name = dimensionsSystem.spacing.scaleNames?.[s] || `${s}`;
-        css += `  --space-${name}: ${s * dimensionsSystem.spacing.baseValue}px;\n`;
-      });
-      
-      css += `\n  /* Radius Scale */\n`;
-      dimensionsSystem.radius.steps.forEach(s => {
-        css += `  --radius-${s.id}: ${s.value}${s.isFull ? '' : 'px'};\n`;
-      });
-
-      css += `\n  /* Semantic Tokens */\n`;
-      dimensionsSystem.semantics.forEach(s => {
-        let val = 0;
-        if (s.type === 'spacing') {
-          val = (s.value as number) * dimensionsSystem.spacing.baseValue;
-        } else {
-          val = dimensionsSystem.radius.steps.find(r => r.id === s.value)?.value || 0;
-        }
-        css += `  --${s.id}: ${val}px; /* ${s.name} */\n`;
-      });
-    }
-
     css += `}\n`;
     return css;
   };
 
   const generateJson = () => JSON.stringify({ 
     colors: selectedTools.includes('colors') ? palette : undefined, 
-    typography: selectedTools.includes('typography') ? typographySystem : undefined,
-    dimensions: selectedTools.includes('dimensions') ? dimensionsSystem : undefined
+    typography: selectedTools.includes('typography') ? typographySystem : undefined
   }, null, 2);
 
   const getCode = () => {
@@ -1030,25 +903,12 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
               </button>
               <button 
                 onClick={() => toggleTool('typography')}
-                className={`flex items-center gap-2.5 transition-all ${selectedTools.includes('typography') ? 'text-indigo-400' : 'text-zinc-600 hover:text-zinc-500'}`}
+                className={`flex items-center gap-2.5 transition-all ${selectedTools.includes('typography') ? 'text-indigo-400' : 'text-zinc-650 hover:text-zinc-500'}`}
               >
                  <div className={`w-4 h-4 rounded-md border-2 flex items-center justify-center transition-all ${selectedTools.includes('typography') ? 'bg-indigo-500 border-indigo-500 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'border-zinc-800'}`}>
                   {selectedTools.includes('typography') && <Check className="w-3 h-3 text-white" strokeWidth={5} />}
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-widest">Typography</span>
-              </button>
-              <button 
-                disabled={true}
-                className="flex items-center gap-2.5 opacity-40 cursor-not-allowed select-none"
-                title="Coming Soon"
-              >
-                 <div className="w-4 h-4 rounded-md border-2 border-zinc-800 flex items-center justify-center">
-                  {/* Disabled Checkbox */}
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-650 flex items-center gap-1.5">
-                  Dimensions
-                  <span className="text-[7px] font-black tracking-normal px-1 py-0.5 bg-zinc-950 text-zinc-500 rounded border border-zinc-900 leading-none">Soon</span>
-                </span>
               </button>
             </div>
 
@@ -1070,88 +930,61 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
 
           {!isDevMode ? (
             <div className="space-y-4 flex-1 overflow-y-auto scrollbar-hide pr-2 -mr-2">
-              <div className="grid grid-cols-3 gap-3">
-                {selectedTools.includes('colors') ? (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-3 rounded-2xl bg-zinc-800/20 border border-zinc-850 flex items-center gap-2.5 hover:border-zinc-800/80 transition-all cursor-default"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0">
-                      <PaletteIcon className="w-3.5 h-3.5 text-indigo-400" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-black text-white leading-none truncate">{totalColors}</div>
-                      <div className="text-[8px] font-black text-zinc-500 uppercase tracking-wide mt-1">Colors</div>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <div className="p-3 rounded-2xl bg-zinc-900/20 border border-zinc-900/50 flex items-center justify-center text-zinc-700 text-[8px] font-black uppercase tracking-wider">
-                    Colors Excluded
-                  </div>
-                )}
-                
-                {selectedTools.includes('typography') ? (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-3 rounded-2xl bg-zinc-800/20 border border-zinc-850 flex items-center gap-2.5 hover:border-zinc-800/80 transition-all cursor-default"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0">
-                      <Type className="w-3.5 h-3.5 text-indigo-400" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-black text-white leading-none truncate">{totalTypography}</div>
-                      <div className="text-[8px] font-black text-zinc-500 uppercase tracking-wide mt-1">Styles</div>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <div className="p-3 rounded-2xl bg-zinc-900/20 border border-zinc-900/50 flex items-center justify-center text-zinc-700 text-[8px] font-black uppercase tracking-wider">
-                    Styles Excluded
-                  </div>
-                )}
-
-                {selectedTools.includes('dimensions') ? (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-3 rounded-2xl bg-zinc-800/20 border border-zinc-850 flex items-center gap-2.5 hover:border-zinc-800/80 transition-all cursor-default"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0">
-                      <Ruler className="w-3.5 h-3.5 text-indigo-400" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-black text-white leading-none truncate">{totalDimensions}</div>
-                      <div className="text-[8px] font-black text-zinc-500 uppercase tracking-wide mt-1">Tokens</div>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <div className="p-3 rounded-2xl bg-zinc-900/20 border border-zinc-900/50 flex items-center justify-center text-zinc-700 text-[8px] font-black uppercase tracking-wider">
-                    Tokens Excluded
-                  </div>
-                )}
-              </div>
+              {selectedTools.length > 0 && (
+                <div className="grid grid-cols-3 gap-3">
+                  {selectedTools.includes('colors') && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-3 rounded-2xl bg-zinc-800/20 border border-zinc-850 flex items-center gap-2.5 hover:border-zinc-800/80 transition-all cursor-default"
+                    >
+                      <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0">
+                        <PaletteIcon className="w-3.5 h-3.5 text-indigo-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-black text-white leading-none truncate">{totalColors}</div>
+                        <div className="text-[8px] font-black text-zinc-500 uppercase tracking-wide mt-1">Colors</div>
+                      </div>
+                    </motion.div>
+                  )}
+                  
+                  {selectedTools.includes('typography') && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-3 rounded-2xl bg-zinc-800/20 border border-zinc-850 flex items-center gap-2.5 hover:border-zinc-800/80 transition-all cursor-default"
+                    >
+                      <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0">
+                        <Type className="w-3.5 h-3.5 text-indigo-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-black text-white leading-none truncate">{totalTypography}</div>
+                        <div className="text-[8px] font-black text-zinc-500 uppercase tracking-wide mt-1">Styles</div>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              )}
 
               {/* Figma Custom Integration Pipeline */}
               <div className="p-5 rounded-3xl bg-gradient-to-b from-zinc-800/20 to-zinc-950/40 border border-zinc-800/60 space-y-4 shadow-xl">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black tracking-[0.25em] text-indigo-400 uppercase">Figma Integration Pipeline</span>
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-800 text-zinc-500 text-[8px] font-bold uppercase">v2.0 plugin</div>
+                  <span className="text-[9px] font-black tracking-[0.25em] text-indigo-400 uppercase">Import into Figma</span>
                 </div>
 
                 <div className="space-y-4 text-left">
                   {/* Step 1 */}
                   <div className="flex gap-3.5 group">
                     <div className="flex flex-col items-center">
-                      <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-[10px] font-black text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all cursor-default scale-100 group-hover:scale-105">
+                      <div className="w-6 h-6 shrink-0 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-[10px] font-black text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all cursor-default scale-100 group-hover:scale-105">
                         1
                       </div>
                       <div className="w-px h-full bg-gradient-to-b from-indigo-500/30 to-rose-500/30 my-1 min-h-[20px]" />
                     </div>
                     <div className="flex-1 space-y-1 pb-1">
-                      <h4 className="text-[10px] font-black text-white uppercase tracking-wider">Copy Generation Script</h4>
+                      <h4 className="text-[10px] font-black text-white uppercase tracking-wider">Copy import script</h4>
                       <p className="text-[9.5px] text-zinc-400 leading-relaxed font-medium">
-                        Click the primary button below to copy the custom automation blueprint. It generates semantic variables instantly on paste.
+                        Click the button below to copy the custom automation script.
                       </p>
                     </div>
                   </div>
@@ -1159,7 +992,7 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
                   {/* Step 2 */}
                   <div className="flex gap-3.5 group">
                     <div className="flex flex-col items-center">
-                      <div className="w-6 h-6 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-[10px] font-black text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-all cursor-default scale-100 group-hover:scale-105">
+                      <div className="w-6 h-6 shrink-0 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-[10px] font-black text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-all cursor-default scale-100 group-hover:scale-105">
                         2
                       </div>
                       <div className="w-px h-full bg-gradient-to-b from-rose-500/30 to-emerald-500/30 my-1 min-h-[20px]" />
@@ -1167,10 +1000,10 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
                     <div className="flex-1 space-y-2 pb-1">
                       <div>
                         <h4 className="text-[10px] font-black text-white uppercase tracking-wider">
-                          Open <span className="bg-gradient-to-r from-orange-400 via-pink-500 to-indigo-500 bg-clip-text text-transparent font-black font-sans">Design with Spectra</span>
+                          Open design with spectra
                         </h4>
-                        <p className="text-[9.5px] text-zinc-400 leading-relaxed font-medium mt-0.5">
-                          Launch our customized layout and style pipeline companion directly in figma.
+                        <p className="text-[9.5px] text-zinc-400 leading-relaxed font-medium mt-0.5 font-sans">
+                          Launch our plugin by either searching for "Design with Spectra" in Figma or by clicking the link below.
                         </p>
                       </div>
 
@@ -1195,14 +1028,14 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
                   {/* Step 3 */}
                   <div className="flex gap-3.5 group">
                     <div className="flex flex-col items-center">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[10px] font-black text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all cursor-default scale-100 group-hover:scale-105">
+                      <div className="w-6 h-6 shrink-0 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[10px] font-black text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all cursor-default scale-100 group-hover:scale-105">
                         3
                       </div>
                     </div>
                     <div className="flex-1 space-y-1">
                       <h4 className="text-[10px] font-black text-white uppercase tracking-wider">Paste & Run</h4>
                       <p className="text-[9.5px] text-zinc-400 leading-relaxed font-medium">
-                        Paste the script into the plugin and hit run to automatically synthesize and build your design system models.
+                        Paste the script into the plugin and hit run to automatically build your design system variables and styles.
                       </p>
                     </div>
                   </div>
@@ -1263,7 +1096,7 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
                 className={`w-full rounded-xl transition-all border-none py-3 font-black uppercase tracking-widest text-[10px] ${copiedId === `footer-${view}` ? 'bg-white text-black' : 'bg-indigo-600 text-white shadow-[0_10px_20px_rgba(79,70,229,0.3)] hover:shadow-[0_15px_30px_rgba(79,70,229,0.4)] hover:-translate-y-0.5'}`}
                 leftIcon={copiedId === `footer-${view}` ? <Check className="w-5 h-5" strokeWidth={4} /> : <Zap className="w-5 h-5" />}
               >
-                {copiedId === `footer-${view}` ? 'Copied to clipboard' : 'Copy Spectra Plugin Script'}
+                {copiedId === `footer-${view}` ? 'Copied to clipboard' : 'Copy Spectra Script'}
               </Button>
             ) : (
               <Button 

@@ -16,7 +16,7 @@ import DimensionsTool, { DEFAULT_DIMENSIONS } from './components/DimensionsTool'
 const DEFAULT_CONTROLS: SystemControls = {
   punch: 0.15,
   steepness: 0.4, 
-  darkness: 0, 
+  darkness: 0.05, 
   hueRotation: 0,
   accessibilitySafe: true
 };
@@ -278,163 +278,7 @@ const App: React.FC = () => {
     setIsSidebarOpen(false); 
   };
 
-  const handleCopyToFigma = useCallback(async (mode: ThemeMode) => {
-    const isDarkArtboard = mode === 'dark';
-    const canvasBg = isDarkArtboard ? '#0A0A0B' : '#FFFFFF';
-    const primaryText = isDarkArtboard ? '#FFFFFF' : '#18181B';
-    const secondaryText = isDarkArtboard ? '#71717A' : '#71717A';
-    const borderCol = isDarkArtboard ? '#27272A' : '#E4E4E7';
-    const cardBg = isDarkArtboard ? '#141416' : '#F9F9FB';
-    const stripeBg = isDarkArtboard ? '#1C1C1E' : '#F1F1F4';
-    const accentColor = '#6366F1';
 
-    const getHex = (sysType: SystemType, step: number | 'white' | 'black') => {
-      if (step === 'white') return '#FFFFFF';
-      if (step === 'black') return '#000000';
-      const sys = systems.find(s => s.type === sysType);
-      return sys?.steps.find(s => s.id === step)?.hex || '#888888';
-    };
-
-    const getSysName = (sysType: SystemType) => {
-      const sys = systems.find(s => s.type === sysType);
-      return sys?.name || sysType.charAt(0).toUpperCase() + sysType.slice(1);
-    };
-
-    const rowHeight = 110;
-    const swatchWidth = 64;
-    const swatchHeight = 54;
-    const semRowHeight = 48;
-    const categoryHeaderHeight = 64;
-    const width = 1120;
-
-    const visibleSemantics = semantics.filter(s => !s.parent);
-    const categoryOrder = ['Text', 'Border', 'Foreground', 'Background'];
-    const activeCategories = categoryOrder.filter(cat => visibleSemantics.some(s => s.category === cat));
-    const totalHeight = 300 + (systems.length * rowHeight) + (activeCategories.length * categoryHeaderHeight) + (visibleSemantics.length * semRowHeight) + 100;
-
-    let svg = `<?xml version="1.0" encoding="UTF-8"?>`;
-    svg += `<svg width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" fill="none" xmlns="http://www.w3.org/2000/svg">`;
-    svg += `<rect id="Artboard Background" width="${width}" height="${totalHeight}" fill="${canvasBg}" />`;
-    
-    svg += `<g id="Spectra Palette: ${mode.toUpperCase()}">`;
-    
-    // 1. HEADER
-    svg += `<g id="System Info">`;
-    svg += `<text x="40" y="60" fill="${primaryText}" font-family="Inter, sans-serif" font-size="32" font-weight="900">SPECTRA CORE</text>`;
-    svg += `<text x="40" y="88" fill="${secondaryText}" font-family="Inter, sans-serif" font-size="12" font-weight="700" letter-spacing="0.1em">DESIGN SYSTEM TOKENS • ${mode.toUpperCase()} ARTBOARD</text>`;
-    svg += `</g>`;
-
-    // 2. PRIMITIVE SCALES
-    let currentY = 160;
-    svg += `<g id="Primitives Section">`;
-    svg += `<text x="40" y="${currentY - 30}" fill="${secondaryText}" font-family="Inter, sans-serif" font-size="11" font-weight="800" letter-spacing="0.25em">PRIMITIVE SCALES</text>`;
-    
-    systems.forEach((sys) => {
-      svg += `<g id="Scale: ${sys.name}">`;
-      svg += `<rect id="Bounding Box" x="30" y="${currentY - 15}" width="${width - 60}" height="${rowHeight - 10}" rx="16" fill="${cardBg}" stroke="${borderCol}" stroke-width="1" />`;
-      svg += `<text x="50" y="${currentY + 28}" fill="${primaryText}" font-family="Inter, sans-serif" font-size="14" font-weight="800">${sys.name}</text>`;
-      
-      sys.steps.forEach((step, i) => {
-        const x = 180 + (i * (swatchWidth + 8));
-        const textColor = step.contrastOnBlack > step.contrastOnWhite ? '#000000' : '#FFFFFF';
-        
-        const displayStepLabel = (sys.type === 'base') 
-          ? (step.id === 0 ? 'W' : (step.id === 1000 ? 'B' : step.id))
-          : step.id;
-
-        svg += `<g id="${sys.name} / ${displayStepLabel}">`;
-        svg += `<rect x="${x}" y="${currentY}" width="${swatchWidth}" height="${swatchHeight}" rx="10" fill="${step.hex}" />`;
-        svg += `<text x="${x + 8}" y="${currentY + 18}" fill="${textColor}" font-family="Inter, sans-serif" font-size="9" font-weight="900" xml:space="preserve">${displayStepLabel}</text>`;
-        svg += `<text x="${x + 8}" y="${currentY + 40}" fill="${textColor}" font-family="JetBrains Mono, monospace" font-size="8" font-weight="500" xml:space="preserve">${step.hex}</text>`;
-        svg += `</g>`;
-      });
-      svg += `</g>`;
-      currentY += rowHeight;
-    });
-    svg += `</g>`;
-
-    // 3. SEMANTIC MAPPINGS (BIDIRECTIONAL)
-    currentY += 60;
-    svg += `<g id="Semantics Section">`;
-    svg += `<text x="40" y="${currentY - 30}" fill="${secondaryText}" font-family="Inter, sans-serif" font-size="11" font-weight="800" letter-spacing="0.25em">SEMANTIC SYSTEM MAPPINGS (ALL MODES)</text>`;
-    
-    svg += `<g id="Table Header">`;
-    svg += `<rect x="40" y="${currentY - 5}" width="${width - 80}" height="42" rx="14" fill="${isDarkArtboard ? '#1C1C1E' : '#F4F4F5'}" />`;
-    svg += `<text x="65" y="${currentY + 22}" fill="${secondaryText}" font-family="Inter, sans-serif" font-size="10" font-weight="900" letter-spacing="0.05em">TOKEN NAME</text>`;
-    svg += `<text x="420" y="${currentY + 22}" fill="${secondaryText}" font-family="Inter, sans-serif" font-size="10" font-weight="900" letter-spacing="0.05em">LIGHT MAPPING</text>`;
-    svg += `<text x="770" y="${currentY + 22}" fill="${secondaryText}" font-family="Inter, sans-serif" font-size="10" font-weight="900" letter-spacing="0.05em">DARK MAPPING</text>`;
-    svg += `</g>`;
-    
-    currentY += 56;
-
-    activeCategories.forEach(cat => {
-      const catTokens = visibleSemantics.filter(s => s.category === cat);
-      if (catTokens.length === 0) return;
-
-      svg += `<g id="Group: ${cat}">`;
-      svg += `<text x="50" y="${currentY + 10}" fill="${accentColor}" font-family="Inter, sans-serif" font-size="10" font-weight="900" letter-spacing="0.1em">${cat.toUpperCase()}</text>`;
-      svg += `<rect x="40" y="${currentY + 24}" width="${width - 80}" height="1" fill="${borderCol}" />`;
-      currentY += 48;
-
-      catTokens.forEach((sem, idx) => {
-        const hexLight = getHex(sem.systemType, sem.lightStep);
-        const hexDark = getHex(sem.systemType, sem.darkStep);
-        
-        const getLabel = (step: number | 'white' | 'black') => {
-          if (step === 'white') return 'Base W';
-          if (step === 'black') return 'Base B';
-          return `${getSysName(sem.systemType)} ${step}`;
-        };
-
-        svg += `<g id="Token: ${sem.name}">`;
-        if (idx % 2 === 0) {
-          svg += `<rect id="Row Fill" x="40" y="${currentY - 14}" width="${width - 80}" height="${semRowHeight}" rx="12" fill="${stripeBg}" />`;
-        }
-
-        svg += `<text x="65" y="${currentY + 16}" fill="${primaryText}" font-family="Inter, sans-serif" font-size="13" font-weight="700">${sem.name}</text>`;
-        
-        // Light Column
-        svg += `<g id="Light: ${sem.name}">`;
-        svg += `<rect x="420" y="${currentY}" width="26" height="26" rx="9" fill="${hexLight}" stroke="${borderCol}" stroke-width="1.5" />`;
-        svg += `<text x="458" y="${currentY + 16}" fill="${primaryText}" font-family="Inter, sans-serif" font-size="11" font-weight="700" xml:space="preserve">${getLabel(sem.lightStep)} <tspan fill="${secondaryText}" font-family="JetBrains Mono" font-weight="500" font-size="10"> — ${hexLight}</tspan></text>`;
-        svg += `</g>`;
-
-        // Dark Column
-        svg += `<g id="Dark: ${sem.name}">`;
-        svg += `<rect x="770" y="${currentY}" width="26" height="26" rx="9" fill="${hexDark}" stroke="${borderCol}" stroke-width="1.5" />`;
-        svg += `<text x="808" y="${currentY + 16}" fill="${primaryText}" font-family="Inter, sans-serif" font-size="11" font-weight="700" xml:space="preserve">${getLabel(sem.darkStep)} <tspan fill="${secondaryText}" font-family="JetBrains Mono" font-weight="500" font-size="10"> — ${hexDark}</tspan></text>`;
-        svg += `</g>`;
-
-        svg += `</g>`;
-        currentY += semRowHeight;
-      });
-      svg += `</g>`;
-      currentY += 24; 
-    });
-    
-    svg += `</g>`;
-    svg += `</g>`;
-    svg += `</svg>`;
-    
-    try {
-      await navigator.clipboard.writeText(svg);
-      return true;
-    } catch (err) {
-      console.error("Figma copy failed:", err);
-      const textArea = document.createElement("textarea");
-      textArea.value = svg;
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        return true;
-      } catch (e) {
-        document.body.removeChild(textArea);
-        return false;
-      }
-    }
-  }, [systems, semantics]);
 
   useEffect(() => {
     setSemantics(current => refreshSemantics(systems, current, theme));
@@ -552,7 +396,6 @@ const App: React.FC = () => {
               onToggleView={setViewMode}
               onOpenAI={() => setIsAIModalOpen(true)}
               onExport={() => setIsExportModalOpen(true)}
-              onCopyToFigma={handleCopyToFigma}
               canUndo={false}
               onUndo={() => {}}
               onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}

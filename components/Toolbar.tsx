@@ -7,7 +7,6 @@ interface ToolbarProps {
   paletteName: string;
   onOpenAI: () => void;
   onExport: () => void;
-  onCopyToFigma: (mode: 'light' | 'dark') => Promise<boolean>;
   onUndo: () => void;
   canUndo: boolean;
   viewMode: 'scales' | 'semantics';
@@ -15,43 +14,17 @@ interface ToolbarProps {
   onToggleSidebar: () => void;
 }
 
-const FigmaLogo = () => (
-  <svg 
-    className="w-4 h-4 flex-shrink-0 overflow-visible" 
-    viewBox="0 0 38 67" 
-    fill="none" 
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M19 0C8.5 0 0 8.5 0 19C0 24.5 2.5 29.5 6.5 32.5C2.5 35.5 0 40.5 0 46C0 56.5 8.5 65 19 65C29.5 65 38 56.5 38 46V19C38 8.5 29.5 0 19 0Z" fill="white" fillOpacity="0.01"/>
-    <path d="M9.5 28.5C14.7467 28.5 19 24.2467 19 19C19 13.7533 14.7467 9.5 9.5 9.5C4.25329 9.5 0 13.7533 0 19C0 24.2467 4.25329 28.5 9.5 28.5Z" fill="#F24E1E"/>
-    <path d="M28.5 28.5C33.7467 28.5 38 24.2467 38 19C38 13.7533 33.7467 9.5 28.5 9.5C23.2533 9.5 19 13.7533 19 19C19 24.2467 23.2533 28.5 28.5 28.5Z" fill="#FF7262"/>
-    <path d="M9.5 47.5C14.7467 47.5 19 43.2467 19 38C19 32.7533 14.7467 28.5 9.5 28.5C4.25329 28.5 0 32.7533 0 38C0 43.2467 4.25329 47.5 9.5 47.5Z" fill="#1ABCFE"/>
-    <path d="M9.5 66.5C14.7467 66.5 19 62.2533 19 57V47.5H9.5C4.25329 47.5 0 51.7467 0 57C0 62.2533 4.25329 66.5 9.5 66.5Z" fill="#0ACF83"/>
-    <path d="M28.5 47.5C33.7467 47.5 38 43.2467 38 38C38 32.7533 33.7467 28.5 28.5 28.5C23.2533 28.5 19 32.7533 19 38C19 43.2467 23.2533 47.5 28.5 47.5Z" fill="#A259FF"/>
-  </svg>
-);
-
 const Toolbar: React.FC<ToolbarProps> = ({ 
   paletteName, 
   onOpenAI, 
   onExport, 
-  onCopyToFigma,
   onUndo, 
   canUndo, 
   viewMode, 
   onToggleView,
   onToggleSidebar
 }) => {
-  const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const [exportState, setExportState] = useState<'idle' | 'success'>('idle');
-
-  const handleCopy = async () => {
-    const success = await onCopyToFigma('light');
-    if (success) {
-      setCopyState('copied');
-      setTimeout(() => setCopyState('idle'), 2500);
-    }
-  };
 
   const handleExportClick = () => {
     onExport();
@@ -105,19 +78,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
         
         <div className="flex items-center gap-4 lg:gap-5 h-full py-2">
           <div className="flex items-center gap-2 sm:gap-3 h-full">
-            <div className="relative h-full flex items-center">
-              <Button 
-                variant={copyState === 'copied' ? 'secondary' : 'secondary'}
-                onClick={() => copyState === 'idle' && handleCopy()}
-                leftIcon={copyState === 'copied' ? <Check className="w-4 h-4 text-emerald-400" strokeWidth={3} /> : <FigmaLogo />}
-                className={copyState === 'copied' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : ''}
-              >
-                <span className={copyState === 'copied' ? '' : 'hidden xs:inline'}>
-                  {copyState === 'copied' ? 'Copied' : 'Figma layout'}
-                </span>
-              </Button>
-            </div>
-
             <Button 
               variant="primary"
               onClick={handleExportClick}

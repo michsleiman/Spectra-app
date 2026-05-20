@@ -194,6 +194,16 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
     setLocalHex(quickColor);
   }, [quickColor]);
 
+  useEffect(() => {
+    if (system && system.steps) {
+      const step500 = system.steps.find(s => s.id === 500) || system.steps[Math.floor(system.steps.length / 2)];
+      if (step500) {
+        setOklch(step500.oklch);
+        setQuickStep(step500.id);
+      }
+    }
+  }, [system]);
+
   const rgb = useMemo(() => {
     const hex = quickColor;
     const r = parseInt(hex.slice(1, 3), 16) || 0;
@@ -304,7 +314,7 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                       <div className="lg:col-span-3 sticky top-0 z-30 lg:relative lg:top-auto flex flex-col h-full bg-zinc-950 lg:bg-transparent pb-4 lg:pb-0">
                         <div className="bg-zinc-950 lg:bg-transparent lg:border-0 p-0 lg:p-0 flex flex-col flex-1">
                            <div 
-                             className="w-full min-h-[100px] lg:flex-1 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-all duration-500 group/preview"
+                             className="w-full min-h-[100px] lg:flex-1 rounded-[1.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden transition-[background-color,border-color,box-shadow,opacity] duration-300 group/preview"
                              style={{ backgroundColor: quickColor }}
                            >
                               <div className={`relative z-10 flex flex-col items-center transition-all duration-300 ${isHexFocused ? 'scale-105' : ''}`}>
@@ -386,21 +396,21 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                         <div className="relative">
                           <div className="min-h-[120px] sm:min-h-[144px]">
                             {format === 'oklch' && (
-                              <div key="oklch-view" className="space-y-3 sm:space-y-4 animate-[fade-in-slide-down_0.2s_ease-out]">
+                              <div key="oklch-view" className="space-y-3 sm:space-y-4 animate-[fade-in_0.2s_ease-out]">
                                 <ControlSliderRaw label="Lightness" val={oklch.l} max={1} step={0.001} gradient={lGradient} onChange={v => handleOklchChange('l', v)} />
                                 <ControlSliderRaw label="Chroma" val={oklch.c} max={0.4} step={0.001} gradient={lGradient} onChange={v => handleOklchChange('c', v)} />
                                 <ControlSliderRaw label="Hue" val={oklch.h} max={360} step={1} gradient={hGradient} onChange={v => handleOklchChange('h', v)} />
                               </div>
                             )}
                             {format === 'rgb' && (
-                              <div key="rgb-view" className="space-y-3 sm:space-y-4 animate-[fade-in-slide-down_0.2s_ease-out]">
+                              <div key="rgb-view" className="space-y-3 sm:space-y-4 animate-[fade-in_0.2s_ease-out]">
                                 <ControlSliderRaw label="Red" val={rgb.r} max={255} step={1} gradient={rGradient} onChange={v => handleRgbChange('r', v)} />
                                 <ControlSliderRaw label="Green" val={rgb.g} max={255} step={1} gradient={gGradient} onChange={v => handleRgbChange('g', v)} />
                                 <ControlSliderRaw label="Blue" val={rgb.b} max={255} step={1} gradient={bGradient} onChange={v => handleRgbChange('b', v)} />
                               </div>
                             )}
                             {format === 'hsl' && (
-                              <div key="hsl-view" className="space-y-3 sm:space-y-4 animate-[fade-in-slide-down_0.2s_ease-out]">
+                              <div key="hsl-view" className="space-y-3 sm:space-y-4 animate-[fade-in_0.2s_ease-out]">
                                 <ControlSliderRaw label="Hue" val={hsl.h} max={360} step={1} gradient={hslHGradient} onChange={v => handleHslChange('h', v)} />
                                 <ControlSliderRaw label="Saturation" val={hsl.s} max={100} step={1} gradient={hslSGradient} onChange={v => handleHslChange('s', v)} />
                                 <ControlSliderRaw label="Lightness" val={hsl.l} max={100} step={1} gradient={hslLGradient} onChange={v => handleHslChange('l', v)} />
