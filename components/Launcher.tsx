@@ -7,11 +7,15 @@ interface LauncherProps {
 }
 
 const Launcher: React.FC<LauncherProps> = ({ onSelectTool }) => {
-  const [activePreview, setActivePreview] = useState<'color' | 'typography'>('color');
+  const [activePreview, setActivePreview] = useState<'color' | 'typography' | 'dimensions'>('color');
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setActivePreview(prev => prev === 'color' ? 'typography' : 'color');
+      setActivePreview(prev => {
+        if (prev === 'color') return 'typography';
+        if (prev === 'typography') return 'dimensions';
+        return 'color';
+      });
     }, 6000);
     return () => clearInterval(interval);
   }, []);
@@ -32,6 +36,14 @@ const Launcher: React.FC<LauncherProps> = ({ onSelectTool }) => {
       icon: Type,
       active: true,
       features: ['Fluid Scaling', 'Contrast Checks', 'Optical Sizing']
+    },
+    {
+      id: 'dimensions',
+      title: 'Dimensions',
+      description: 'Spatial scale structures, grid configurations, alignment metrics, and corner radius tokens.',
+      icon: Ruler,
+      active: true,
+      features: ['Spacing Scales', 'Radius Tokens', 'Live Preview']
     }
   ];
 
@@ -117,6 +129,19 @@ const Launcher: React.FC<LauncherProps> = ({ onSelectTool }) => {
                     >
                       Type
                     </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActivePreview('dimensions');
+                      }}
+                      className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all duration-300 ${
+                        activePreview === 'dimensions'
+                          ? 'bg-amber-600 text-white shadow'
+                          : 'text-zinc-550 hover:text-zinc-300'
+                      }`}
+                    >
+                      Space
+                    </button>
                   </div>
                   
                   {/* Decorative Carousel Indicator dots */}
@@ -134,6 +159,13 @@ const Launcher: React.FC<LauncherProps> = ({ onSelectTool }) => {
                         setActivePreview('typography');
                       }}
                       className={`w-1.5 h-1.5 rounded-full cursor-pointer transition-all duration-300 ${activePreview === 'typography' ? 'bg-pink-500 w-3' : 'bg-zinc-800'}`} 
+                    />
+                    <span 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActivePreview('dimensions');
+                      }}
+                      className={`w-1.5 h-1.5 rounded-full cursor-pointer transition-all duration-300 ${activePreview === 'dimensions' ? 'bg-amber-500 w-3' : 'bg-zinc-800'}`} 
                     />
                   </div>
                 </div>
@@ -187,7 +219,7 @@ const Launcher: React.FC<LauncherProps> = ({ onSelectTool }) => {
                           <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">7.4:1 AAA Pass</span>
                         </div>
                       </motion.div>
-                    ) : (
+                    ) : activePreview === 'typography' ? (
                       <motion.div
                         key="typography-preview"
                         initial={{ opacity: 0, x: 10 }}
@@ -216,6 +248,38 @@ const Launcher: React.FC<LauncherProps> = ({ onSelectTool }) => {
                           <div className="flex justify-between text-[9px]">
                             <span className="text-pink-400/85">Display Scale Base:</span>
                             <span className="text-zinc-400">16px → 20px → 25px → 31px → 39px</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="dimensions-preview"
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.25 }}
+                        className="h-full flex flex-col justify-between space-y-2.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-black uppercase text-amber-400 tracking-widest">Dimension & Grid Engine</span>
+                          <span className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">Base: 4px Grid</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {/* Elegant dimension glyph */}
+                          <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-850 flex items-center justify-center text-xl font-serif text-white font-black select-none pointer-events-none shadow-md">
+                            <Ruler className="w-5 h-5 text-amber-400" strokeWidth={2.5} />
+                          </div>
+                          <div className="flex-1 space-y-0.5">
+                            <h4 className="text-zinc-300 font-sans font-black text-[10px]">Geometric Spacing Systems</h4>
+                            <p className="text-zinc-550 font-sans text-[9px] leading-snug">
+                              Professional multi-tier gaps, corner rounding, and fluid custom layouts.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-1 pt-1.5 border-t border-zinc-900/50 space-y-0.5">
+                          <div className="flex justify-between text-[9px]">
+                            <span className="text-amber-400/85">Radius Standard:</span>
+                            <span className="text-zinc-400">0px → 4px → 8px → 12px → 16px → Full</span>
                           </div>
                         </div>
                       </motion.div>
@@ -269,33 +333,33 @@ const Launcher: React.FC<LauncherProps> = ({ onSelectTool }) => {
             <div className="bg-zinc-900/10 border border-zinc-900/50 rounded-2xl p-5 sm:p-6 mt-2">
               <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-900">
                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Roadmap Primitives</span>
-                 <span className="text-[8px] font-black uppercase tracking-widest bg-zinc-950 px-2 py-0.5 border border-zinc-900 rounded text-zinc-600">v1.3 In Development</span>
+                 <span className="text-[8px] font-black uppercase tracking-widest bg-zinc-950 px-2 py-0.5 border border-zinc-900 rounded text-zinc-600">v1.4 In Development</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 <div className="bg-zinc-950/40 border border-zinc-900/40 p-4 rounded-xl">
-                   <div className="flex items-center justify-between mb-1.5">
-                     <div className="flex items-center gap-2">
-                       <Ruler className="w-4 h-4 text-indigo-400" />
-                       <span className="text-xs font-black text-white">Dimensions</span>
-                     </div>
-                     <span className="text-[9px] font-mono text-indigo-400 font-bold">85% Progress</span>
-                   </div>
-                   <p className="text-[10px] text-zinc-500 leading-normal mb-3">Corner curves, space scale bases & dynamic spacing layouts.</p>
-                   <div className="w-full h-1 bg-zinc-950 rounded-full overflow-hidden">
-                     <div className="h-full bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.4)]" style={{ width: '85%' }} />
-                   </div>
-                 </div>
                  <div className="bg-zinc-950/40 border border-zinc-900/40 p-4 rounded-xl">
                    <div className="flex items-center justify-between mb-1.5">
                      <div className="flex items-center gap-2">
                        <Box className="w-4 h-4 text-purple-400" />
                        <span className="text-xs font-black text-white">Component Lab</span>
                      </div>
-                     <span className="text-[9px] font-mono text-purple-400 font-bold">40% Progress</span>
+                     <span className="text-[9px] font-mono text-purple-400 font-bold">85% Progress</span>
                    </div>
                    <p className="text-[10px] text-zinc-500 leading-normal mb-3">State orchestrator variables and high-fidelity code wrappers.</p>
                    <div className="w-full h-1 bg-zinc-950 rounded-full overflow-hidden">
-                     <div className="h-full bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.4)]" style={{ width: '40%' }} />
+                     <div className="h-full bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.4)]" style={{ width: '85%' }} />
+                   </div>
+                 </div>
+                 <div className="bg-zinc-950/40 border border-zinc-900/40 p-4 rounded-xl">
+                   <div className="flex items-center justify-between mb-1.5">
+                     <div className="flex items-center gap-2">
+                       <span className="text-emerald-400 font-bold">✦</span>
+                       <span className="text-xs font-black text-white">Elevation & Shadows</span>
+                     </div>
+                     <span className="text-[9px] font-mono text-emerald-400 font-bold">25% Progress</span>
+                   </div>
+                   <p className="text-[10px] text-zinc-500 leading-normal mb-3">Mathematical ambient lighting, depth tokens, and overlay physics.</p>
+                   <div className="w-full h-1 bg-zinc-950 rounded-full overflow-hidden">
+                     <div className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.4)]" style={{ width: '25%' }} />
                    </div>
                  </div>
               </div>

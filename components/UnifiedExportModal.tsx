@@ -25,9 +25,9 @@ const ArrowRight = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typographySystem, dimensionsSystem, onClose, initialTools = ['colors', 'typography'] }) => {
-  const [selectedTools, setSelectedTools] = useState<('colors' | 'typography')[]>(() => {
-    return initialTools.filter(t => t === 'colors' || t === 'typography') as ('colors' | 'typography')[];
+const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typographySystem, dimensionsSystem, onClose, initialTools = ['colors', 'typography', 'dimensions'] }) => {
+  const [selectedTools, setSelectedTools] = useState<('colors' | 'typography' | 'dimensions')[]>(() => {
+    return initialTools.filter(t => t === 'colors' || t === 'typography' || t === 'dimensions') as ('colors' | 'typography' | 'dimensions')[];
   });
   const [view, setView] = useState<'scripter' | 'tailwind' | 'json'>('scripter');
   const [isDevMode, setIsDevMode] = useState(false);
@@ -43,7 +43,7 @@ const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typogr
     setTimeout(onClose, 300);
   };
 
-  const toggleTool = (tool: 'colors' | 'typography') => {
+  const toggleTool = (tool: 'colors' | 'typography' | 'dimensions') => {
     setSelectedTools(prev => 
       prev.includes(tool) 
         ? prev.filter(t => t !== tool) 
@@ -53,6 +53,7 @@ const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typogr
 
   const totalColors = palette.systems.reduce((acc, sys) => acc + sys.steps.length, 0);
   const totalTypography = typographySystem.fontSystems.reduce((acc, fs) => acc + fs.steps.length, 0);
+  const totalDimensions = dimensionsSystem?.semantics.length || 0;
   const totalModes = 2; // Fixed for now
 
   // --- Helpers for script generation ---
@@ -174,6 +175,10 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
     if (selectedTools.includes('typography')) {
       const typeData = getStylesData();
       script += `const TYPOGRAPHY_DATA = ${JSON.stringify(typeData, null, 2)};\n\n`;
+    }
+    if (selectedTools.includes('dimensions') && dimensionsSystem) {
+      script += `const DIMENSIONS_DATA = ${JSON.stringify(dimensionsSystem.semantics, null, 2)};\n`;
+      script += `const BASE_VALUE = ${dimensionsSystem.spacing.baseValue};\n\n`;
     }
 
     // Phase 1: Primitives
@@ -335,6 +340,33 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
     } catch (e) {
       console.warn("Error syncing typography style " + s.name + ":", e);
     }
+  }
+}\n\n`;
+    }
+
+    if (selectedTools.includes('dimensions') && dimensionsSystem) {
+      script += `async function syncDimensions() {
+  console.log("-> Syncing Dimensions Variables...");
+  const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
+  let collection = localCollections.find(c => c.name === "Dimensions");
+  if (!collection) {
+    collection = figma.variables.createVariableCollection("Dimensions");
+    localCollections.push(collection);
+  }
+  const modeId = collection.modes[0].modeId;
+  collection.renameMode(modeId, "Value");
+
+  const localVariables = await figma.variables.getLocalVariablesAsync();
+
+  for (const item of DIMENSIONS_DATA) {
+    let v = localVariables.find(x => x.name === item.name && x.variableCollectionId === collection.id);
+    if (!v) {
+      v = figma.variables.createVariable(item.name, collection, "FLOAT");
+      localVariables.push(v);
+    }
+    const val = item.value === 999 ? 999 : item.value * BASE_VALUE;
+    v.setValueForMode(modeId, val);
+    v.scopes = item.type === 'radius' ? ['CORNER_RADIUS'] : ['GAP', 'PADDING', 'WIDTH', 'HEIGHT'];
   }
 }\n\n`;
     }
@@ -818,6 +850,10 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
       script += `await bindTypography();\n\n`;
     }
 
+    if (selectedTools.includes('dimensions')) {
+      script += `await syncDimensions();\n\n`;
+    }
+
     script += `await generateLayout(colorResults, primResults?.variableMap);\n\n`;
     script += `console.log("-----------------------------------------");\n`;
     script += `console.log("DONE: Spectra Design System Synchronized");\n`;
@@ -846,13 +882,24 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
       css += `\n`;
     }
 
+    if (selectedTools.includes('dimensions') && dimensionsSystem) {
+      css += `  /* Dimensions */\n`;
+      css += `  --spacing-base: ${dimensionsSystem.spacing.baseValue}px;\n`;
+      dimensionsSystem.semantics.forEach(tok => {
+        const pxVal = tok.value === 999 ? '999px' : `${(tok.value as number) * dimensionsSystem.spacing.baseValue}px`;
+        css += `  --dim-${tok.name}: ${pxVal};\n`;
+      });
+      css += `\n`;
+    }
+
     css += `}\n`;
     return css;
   };
 
   const generateJson = () => JSON.stringify({ 
     colors: selectedTools.includes('colors') ? palette : undefined, 
-    typography: selectedTools.includes('typography') ? typographySystem : undefined
+    typography: selectedTools.includes('typography') ? typographySystem : undefined,
+    dimensions: selectedTools.includes('dimensions') ? dimensionsSystem : undefined
   }, null, 2);
 
   const getCode = () => {
@@ -894,7 +941,7 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
             <div className="flex gap-6">
               <button 
                 onClick={() => toggleTool('colors')}
-                className={`flex items-center gap-2.5 transition-all ${selectedTools.includes('colors') ? 'text-indigo-400' : 'text-zinc-600 hover:text-zinc-500'}`}
+                className={`flex items-center gap-2.5 transition-all ${selectedTools.includes('colors') ? 'text-indigo-400' : 'text-zinc-650 hover:text-zinc-500'}`}
               >
                 <div className={`w-4 h-4 rounded-md border-2 flex items-center justify-center transition-all ${selectedTools.includes('colors') ? 'bg-indigo-500 border-indigo-500 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'border-zinc-800'}`}>
                   {selectedTools.includes('colors') && <Check className="w-3 h-3 text-white" strokeWidth={5} />}
@@ -903,13 +950,24 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
               </button>
               <button 
                 onClick={() => toggleTool('typography')}
-                className={`flex items-center gap-2.5 transition-all ${selectedTools.includes('typography') ? 'text-indigo-400' : 'text-zinc-650 hover:text-zinc-500'}`}
+                className={`flex items-center gap-2.5 transition-all ${selectedTools.includes('typography') ? 'text-indigo-400' : 'text-zinc-655 hover:text-zinc-500'}`}
               >
                  <div className={`w-4 h-4 rounded-md border-2 flex items-center justify-center transition-all ${selectedTools.includes('typography') ? 'bg-indigo-500 border-indigo-500 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'border-zinc-800'}`}>
                   {selectedTools.includes('typography') && <Check className="w-3 h-3 text-white" strokeWidth={5} />}
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-widest">Typography</span>
               </button>
+              {dimensionsSystem && (
+                <button 
+                  onClick={() => toggleTool('dimensions')}
+                  className={`flex items-center gap-2.5 transition-all ${selectedTools.includes('dimensions') ? 'text-indigo-400' : 'text-zinc-655 hover:text-zinc-500'}`}
+                >
+                   <div className={`w-4 h-4 rounded-md border-2 flex items-center justify-center transition-all ${selectedTools.includes('dimensions') ? 'bg-indigo-500 border-indigo-500 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'border-zinc-800'}`}>
+                    {selectedTools.includes('dimensions') && <Check className="w-3 h-3 text-white" strokeWidth={5} />}
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Dimensions</span>
+                </button>
+              )}
             </div>
 
             {/* Dev Mode Toggle */}
@@ -960,6 +1018,22 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
                       <div className="min-w-0">
                         <div className="text-sm font-black text-white leading-none truncate">{totalTypography}</div>
                         <div className="text-[8px] font-black text-zinc-500 uppercase tracking-wide mt-1">Styles</div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {selectedTools.includes('dimensions') && dimensionsSystem && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-3 rounded-2xl bg-zinc-800/20 border border-zinc-850 flex items-center gap-2.5 hover:border-zinc-800/80 transition-all cursor-default"
+                    >
+                      <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0">
+                        <Ruler className="w-3.5 h-3.5 text-indigo-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-black text-white leading-none truncate">{totalDimensions}</div>
+                        <div className="text-[8px] font-black text-zinc-500 uppercase tracking-wide mt-1">Tokens</div>
                       </div>
                     </motion.div>
                   )}

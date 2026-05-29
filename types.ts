@@ -153,6 +153,7 @@ export interface DimensionSemanticToken {
   category: string;
   type: 'spacing' | 'radius';
   value: number | string; // The step multiplier (e.g. 2 for 8px) or the radius step ID
+  isCustom?: boolean;
 }
 
 export interface DimensionsData {

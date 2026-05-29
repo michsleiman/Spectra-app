@@ -580,7 +580,8 @@ const MainCanvas: React.FC<MainCanvasProps> = ({
                                 <button 
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    navigator.clipboard.writeText(step.hex);
+                                    const rawHex = step.hex.startsWith('#') ? step.hex.slice(1) : step.hex;
+                                    navigator.clipboard.writeText(rawHex);
                                     setCopiedId(step.id);
                                     setTimeout(() => setCopiedId(null), 1500);
                                   }}

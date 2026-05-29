@@ -113,11 +113,32 @@ const App: React.FC = () => {
   });
 
   const [dimensionsSystem, setDimensionsSystem] = useState<DimensionsData>(() => {
-    const saved = localStorage.getItem('spectra-dimensions-v9');
+    const saved = localStorage.getItem('spectra-dimensions-v11');
     if (!saved) return DEFAULT_DIMENSIONS;
     try {
       const parsed = JSON.parse(saved);
-      return { ...DEFAULT_DIMENSIONS, ...parsed };
+      // Merge semantics by id to ensure default tokens (including Size category scales) are never lost
+      const mergedSemantics = [...DEFAULT_DIMENSIONS.semantics];
+      if (parsed.semantics && Array.isArray(parsed.semantics)) {
+        parsed.semantics.forEach((tok: any) => {
+          const existsIdx = mergedSemantics.findIndex(s => s.id === tok.id);
+          if (existsIdx > -1) {
+            // Keep user overrides/customization, but normalize keys to title case if needed
+            let category = tok.category;
+            if (category === 'Component size') category = 'Component Size';
+            if (category === 'Surface size') category = 'Surface Size';
+            if (category === 'Layout size') category = 'Layout Size';
+            mergedSemantics[existsIdx] = { ...mergedSemantics[existsIdx], ...tok, category };
+          } else {
+            mergedSemantics.push(tok);
+          }
+        });
+      }
+      return { 
+        ...DEFAULT_DIMENSIONS, 
+        ...parsed,
+        semantics: mergedSemantics
+      };
     } catch (e) {
       return DEFAULT_DIMENSIONS;
     }
@@ -132,7 +153,7 @@ const App: React.FC = () => {
   }, [typographySystem]);
 
   useEffect(() => {
-    localStorage.setItem('spectra-dimensions-v9', JSON.stringify(dimensionsSystem));
+    localStorage.setItem('spectra-dimensions-v11', JSON.stringify(dimensionsSystem));
   }, [dimensionsSystem]);
 
   const handleSaveSnapshot = useCallback((name: string) => {
@@ -451,7 +472,7 @@ const App: React.FC = () => {
               typographySystem={typographySystem}
               dimensionsSystem={dimensionsSystem}
               onClose={() => setIsExportModalOpen(false)} 
-              initialTools={['colors']}
+              initialTools={['colors', 'typography', 'dimensions']}
             />
           )}
         </motion.div>
