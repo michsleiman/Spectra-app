@@ -106,6 +106,20 @@ const App: React.FC = () => {
     if (!saved) return DEFAULT_TYPOGRAPHY_SYSTEM;
     try {
       const parsed = JSON.parse(saved);
+      // Migrate font systems to simplified scales
+      if (parsed.fontSystems && Array.isArray(parsed.fontSystems)) {
+        parsed.fontSystems = parsed.fontSystems.map((fs: any) => {
+          // If the font system has old step count or configuration, refresh steps to DEFAULT_STEPS with preserved family & name
+          const hasNewSteps = fs.steps && fs.steps.length === DEFAULT_TYPOGRAPHY_SYSTEM.fontSystems[0].steps.length && fs.steps[fs.steps.length - 1].fontSize === 128 && fs.steps[0].fontSize === 12;
+          if (!hasNewSteps) {
+            return {
+              ...fs,
+              steps: JSON.parse(JSON.stringify(DEFAULT_TYPOGRAPHY_SYSTEM.fontSystems[0].steps))
+            };
+          }
+          return fs;
+        });
+      }
       return { ...DEFAULT_TYPOGRAPHY_SYSTEM, ...parsed };
     } catch (e) {
       return DEFAULT_TYPOGRAPHY_SYSTEM;
@@ -113,7 +127,7 @@ const App: React.FC = () => {
   });
 
   const [dimensionsSystem, setDimensionsSystem] = useState<DimensionsData>(() => {
-    const saved = localStorage.getItem('spectra-dimensions-v11');
+    const saved = localStorage.getItem('spectra-dimensions-v12');
     if (!saved) return DEFAULT_DIMENSIONS;
     try {
       const parsed = JSON.parse(saved);
@@ -153,7 +167,7 @@ const App: React.FC = () => {
   }, [typographySystem]);
 
   useEffect(() => {
-    localStorage.setItem('spectra-dimensions-v11', JSON.stringify(dimensionsSystem));
+    localStorage.setItem('spectra-dimensions-v12', JSON.stringify(dimensionsSystem));
   }, [dimensionsSystem]);
 
   const handleSaveSnapshot = useCallback((name: string) => {
@@ -341,6 +355,7 @@ const App: React.FC = () => {
               semantics, 
               globalSettings: { masterControls: DEFAULT_CONTROLS } 
             }}
+            dimensionsSystem={dimensionsSystem}
           />
         </motion.div>
       ) : currentTool === 'dimensions' ? (

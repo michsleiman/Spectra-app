@@ -4,6 +4,7 @@ import { Button } from './Button';
 import { Palette, TypographySystem, SystemType, DimensionsData } from '../types';
 import { X, Copy, Download, Check, Type, Zap, Ruler, Palette as PaletteIcon, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { DEFAULT_DIMENSIONS } from './DimensionsTool';
 
 interface UnifiedExportModalProps {
   palette: Palette;
@@ -26,6 +27,7 @@ const ArrowRight = ({ className }: { className?: string }) => (
 );
 
 const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typographySystem, dimensionsSystem, onClose, initialTools = ['colors', 'typography', 'dimensions'] }) => {
+  const activeDimensions = dimensionsSystem || DEFAULT_DIMENSIONS;
   const [selectedTools, setSelectedTools] = useState<('colors' | 'typography' | 'dimensions')[]>(() => {
     return initialTools.filter(t => t === 'colors' || t === 'typography' || t === 'dimensions') as ('colors' | 'typography' | 'dimensions')[];
   });
@@ -53,7 +55,7 @@ const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typogr
 
   const totalColors = palette.systems.reduce((acc, sys) => acc + sys.steps.length, 0);
   const totalTypography = typographySystem.fontSystems.reduce((acc, fs) => acc + fs.steps.length, 0);
-  const totalDimensions = dimensionsSystem?.semantics.length || 0;
+  const totalDimensions = activeDimensions.semantics.length;
   const totalModes = 2; // Fixed for now
 
   // --- Helpers for script generation ---
@@ -174,11 +176,17 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
     }
     if (selectedTools.includes('typography')) {
       const typeData = getStylesData();
+      const fontSystemsData = typographySystem.fontSystems.map(fs => ({
+        id: fs.id,
+        name: fs.name,
+        family: fs.family
+      }));
+      script += `const FONT_SYSTEMS_DATA = ${JSON.stringify(fontSystemsData, null, 2)};\n`;
       script += `const TYPOGRAPHY_DATA = ${JSON.stringify(typeData, null, 2)};\n\n`;
     }
-    if (selectedTools.includes('dimensions') && dimensionsSystem) {
-      script += `const DIMENSIONS_DATA = ${JSON.stringify(dimensionsSystem.semantics, null, 2)};\n`;
-      script += `const BASE_VALUE = ${dimensionsSystem.spacing.baseValue};\n\n`;
+    if (selectedTools.includes('dimensions')) {
+      script += `const DIMENSIONS_DATA = ${JSON.stringify(activeDimensions.semantics, null, 2)};\n`;
+      script += `const BASE_VALUE = ${activeDimensions.spacing.baseValue};\n\n`;
     }
 
     // Phase 1: Primitives
@@ -789,51 +797,166 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
     } catch (e) { console.error("Error in color frame generation:", e); }
   }
 
-  // TYPOGRAPHY FRAME (Dynamic snippet using async endpoints)
+  // TYPOGRAPHY FRAMES — ONE SEPARATE FRAME PER FONT
   ${selectedTools.includes('typography') ? `
   try {
-    const typoFrame = createDocFrame("Spectra — Typography System", "TYPOGRAPHY SYSTEM", "VISUAL HIERARCHY & TEXT STYLES");
+    const localStyles = await figma.getLocalTextStylesAsync();
+
+    for (const fs of FONT_SYSTEMS_DATA) {
+      const frameName = "Spectra — Typography: " + fs.name + " (" + fs.family + ")";
+      const frameTitle = fs.name.toUpperCase();
+      const frameSubtitle = fs.family.toUpperCase() + " • VISUAL HIERARCHY & TEXT STYLES";
+
+      const typoFrame = createDocFrame(frameName, frameTitle, frameSubtitle);
+
+      if (framesToZoom.length > 0) {
+        const lastFrame = framesToZoom[framesToZoom.length - 1];
+        typoFrame.x = lastFrame.x + (lastFrame.width > 0 ? lastFrame.width : 1000) + 160;
+        typoFrame.y = lastFrame.y;
+      }
+      framesToZoom.push(typoFrame);
+
+      // Filter styles that belong to this font system
+      const fsStyles = localStyles
+        .filter(s => s.name.startsWith(fs.name + "/") || (s.fontName && s.fontName.family === fs.family))
+        .sort((a, b) => b.fontSize - a.fontSize);
+
+      const finalStyles = fsStyles.length > 0 
+        ? fsStyles 
+        : localStyles.filter(s => s.name.toLowerCase().includes(fs.name.toLowerCase())).sort((a, b) => b.fontSize - a.fontSize);
+
+      for (const style of finalStyles) {
+        const row = figma.createFrame();
+        row.name = "Typography Step: " + style.name;
+        row.layoutMode = "VERTICAL";
+        row.itemSpacing = 16;
+        row.paddingTop = 24; 
+        row.paddingBottom = 24;
+        row.primaryAxisSizingMode = "AUTO";
+        row.counterAxisSizingMode = "AUTO";
+        row.fills = [];
+        typoFrame.appendChild(row);
+
+        const info = figma.createText();
+        robustSetFont(info, JETBRAINS);
+        const lhText = style.lineHeight.unit === 'PIXELS' ? Math.round(style.lineHeight.value) + 'px' : style.lineHeight.unit;
+        const lsValue = style.letterSpacing.value || 0;
+        const lsText = style.letterSpacing.unit === 'PERCENT' ? Math.round(lsValue) + '%' : Math.round(lsValue) + 'px';
+        info.characters = style.name.toUpperCase() + "  —  SIZE: " + style.fontSize + "px  |  LH: " + lhText + "  |  LS: " + lsText;
+        info.fontSize = 12;
+        info.fills = [{ type: 'SOLID', color: { r: 0.5, g: 0.5, b: 1 } }];
+        row.appendChild(info);
+
+        const sample = figma.createText();
+        try {
+          await figma.loadFontAsync(style.fontName);
+          await sample.setTextStyleIdAsync(style.id);
+          sample.characters = "The quick brown fox jumps over the lazy dog";
+          sample.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
+        } catch (fontErr) {
+          robustSetFont(sample, INTER_REGULAR);
+          sample.characters = "The quick brown fox jumps over the lazy dog";
+          sample.fontSize = style.fontSize;
+          sample.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
+        }
+        row.appendChild(sample);
+      }
+    }
+  } catch (e) { console.error("Error in typography frames generation:", e); }
+  ` : ''}
+
+  // DIMENSIONS DOCUMENTATION FRAME
+  ${selectedTools.includes('dimensions') ? `
+  try {
+    const dimFrame = createDocFrame("Spectra — Dimensions & Spacing", "DIMENSIONS & SPACING", "SPATIAL SYSTEM, CORNER RADII & COMPONENT SIZES");
     if (framesToZoom.length > 0) {
-      typoFrame.x = framesToZoom[framesToZoom.length - 1].x + framesToZoom[framesToZoom.length - 1].width + 200;
+      const lastFrame = framesToZoom[framesToZoom.length - 1];
+      dimFrame.x = lastFrame.x + (lastFrame.width > 0 ? lastFrame.width : 1000) + 160;
+      dimFrame.y = lastFrame.y;
     }
-    framesToZoom.push(typoFrame);
+    framesToZoom.push(dimFrame);
 
-    const styles = await figma.getLocalTextStylesAsync();
-    const sortedStyles = [...styles].sort((a, b) => b.fontSize - a.fontSize);
-    
-    for (const style of sortedStyles) {
-      const row = figma.createFrame();
-      row.name = "Typography Step: " + style.name;
-      row.layoutMode = "VERTICAL";
-      row.itemSpacing = 16;
-      row.paddingTop = 24; row.paddingBottom = 24;
-      row.primaryAxisSizingMode = "AUTO";
-      row.counterAxisSizingMode = "AUTO";
-      row.fills = [];
-      typoFrame.appendChild(row);
+    const categories = ["Spacing", "Radius", "Component Size", "Surface Size", "Layout Size"];
+    for (const cat of categories) {
+      const catTokens = DIMENSIONS_DATA.filter(d => d.category === cat);
+      if (catTokens.length === 0) continue;
 
-      const info = figma.createText();
-      robustSetFont(info, JETBRAINS);
-      const lhText = style.lineHeight.unit === 'PIXELS' ? Math.round(style.lineHeight.value) + 'px' : style.lineHeight.unit;
-      const lsValue = style.letterSpacing.value || 0;
-      const lsText = style.letterSpacing.unit === 'PERCENT' ? Math.round(lsValue) + '%' : Math.round(lsValue) + 'px';
-      info.characters = style.name.toUpperCase() + "  —  SIZE: " + style.fontSize + "px  |  LH: " + lhText + "  |  LS: " + lsText;
-      info.fontSize = 12;
-      info.fills = [{ type: 'SOLID', color: { r: 0.5, g: 0.5, b: 1 } }];
-      row.appendChild(info);
+      const catGroup = figma.createFrame();
+      catGroup.name = "Category: " + cat;
+      catGroup.layoutMode = "VERTICAL";
+      catGroup.primaryAxisSizingMode = "AUTO";
+      catGroup.counterAxisSizingMode = "AUTO";
+      catGroup.itemSpacing = 16;
+      catGroup.fills = [];
+      dimFrame.appendChild(catGroup);
 
-      const sample = figma.createText();
-      await figma.loadFontAsync(style.fontName);
-      await sample.setTextStyleIdAsync(style.id);
-      sample.characters = "The quick brown fox jumps over the lazy dog";
-      sample.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
-      row.appendChild(sample);
+      const catTitle = figma.createText();
+      robustSetFont(catTitle, INTER_BLACK);
+      catTitle.characters = cat.toUpperCase();
+      catTitle.fontSize = 18;
+      catTitle.fills = [{ type: 'SOLID', color: { r: 0.4, g: 0.4, b: 1 } }];
+      catGroup.appendChild(catTitle);
+
+      const grid = figma.createFrame();
+      grid.name = "Tokens List";
+      grid.layoutMode = "VERTICAL";
+      grid.itemSpacing = 10;
+      grid.primaryAxisSizingMode = "AUTO";
+      grid.counterAxisSizingMode = "AUTO";
+      grid.fills = [];
+      catGroup.appendChild(grid);
+
+      for (const token of catTokens) {
+        const valPx = token.value === 999 ? 999 : token.value * BASE_VALUE;
+        const row = figma.createFrame();
+        row.name = "Token: " + token.name;
+        row.layoutMode = "HORIZONTAL";
+        row.itemSpacing = 16;
+        row.primaryAxisSizingMode = "AUTO";
+        row.counterAxisSizingMode = "AUTO";
+        row.paddingTop = 10; row.paddingBottom = 10; row.paddingLeft = 16; row.paddingRight = 16;
+        row.cornerRadius = 10;
+        row.fills = [{ type: 'SOLID', color: { r: 0.98, g: 0.98, b: 0.99 } }];
+        row.strokes = [{ type: 'SOLID', color: { r: 0.9, g: 0.9, b: 0.92 } }];
+        grid.appendChild(row);
+
+        // Visual preview box
+        const preview = figma.createRectangle();
+        preview.name = "Preview";
+        if (token.type === 'radius') {
+          preview.resize(36, 36);
+          preview.cornerRadius = Math.min(18, valPx);
+          preview.fills = [{ type: 'SOLID', color: { r: 0.85, g: 0.88, b: 1 } }];
+          preview.strokes = [{ type: 'SOLID', color: { r: 0.4, g: 0.4, b: 1 } }];
+        } else {
+          const w = Math.min(120, Math.max(12, valPx));
+          preview.resize(w, 24);
+          preview.cornerRadius = 4;
+          preview.fills = [{ type: 'SOLID', color: { r: 0.4, g: 0.4, b: 1 } }];
+        }
+        row.appendChild(preview);
+
+        const nameLabel = figma.createText();
+        robustSetFont(nameLabel, INTER_BOLD);
+        nameLabel.characters = token.name;
+        nameLabel.fontSize = 12;
+        row.appendChild(nameLabel);
+
+        const valLabel = figma.createText();
+        robustSetFont(valLabel, JETBRAINS);
+        valLabel.characters = valPx + "px" + (token.value !== valPx ? " (" + token.value + "x)" : "");
+        valLabel.fontSize = 11;
+        valLabel.fills = [{ type: 'SOLID', color: { r: 0.5, g: 0.5, b: 0.5 } }];
+        row.appendChild(valLabel);
+      }
     }
-  } catch (e) { console.error("Error in typography frame generation:", e); }
+  } catch (e) { console.error("Error in dimensions frame generation:", e); }
   ` : ''}
 
   if (framesToZoom.length > 0) figma.viewport.scrollAndZoomIntoView(framesToZoom);
-}\n\n`;
+}
+
+`;
 
     script += `console.log("-> Starting generation...");\n\n`;
 
@@ -882,11 +1005,11 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
       css += `\n`;
     }
 
-    if (selectedTools.includes('dimensions') && dimensionsSystem) {
+    if (selectedTools.includes('dimensions')) {
       css += `  /* Dimensions */\n`;
-      css += `  --spacing-base: ${dimensionsSystem.spacing.baseValue}px;\n`;
-      dimensionsSystem.semantics.forEach(tok => {
-        const pxVal = tok.value === 999 ? '999px' : `${(tok.value as number) * dimensionsSystem.spacing.baseValue}px`;
+      css += `  --spacing-base: ${activeDimensions.spacing.baseValue}px;\n`;
+      activeDimensions.semantics.forEach(tok => {
+        const pxVal = tok.value === 999 ? '999px' : `${(tok.value as number) * activeDimensions.spacing.baseValue}px`;
         css += `  --dim-${tok.name}: ${pxVal};\n`;
       });
       css += `\n`;
@@ -899,7 +1022,7 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
   const generateJson = () => JSON.stringify({ 
     colors: selectedTools.includes('colors') ? palette : undefined, 
     typography: selectedTools.includes('typography') ? typographySystem : undefined,
-    dimensions: selectedTools.includes('dimensions') ? dimensionsSystem : undefined
+    dimensions: selectedTools.includes('dimensions') ? activeDimensions : undefined
   }, null, 2);
 
   const getCode = () => {
@@ -957,17 +1080,15 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-widest">Typography</span>
               </button>
-              {dimensionsSystem && (
-                <button 
-                  onClick={() => toggleTool('dimensions')}
-                  className={`flex items-center gap-2.5 transition-all ${selectedTools.includes('dimensions') ? 'text-indigo-400' : 'text-zinc-655 hover:text-zinc-500'}`}
-                >
-                   <div className={`w-4 h-4 rounded-md border-2 flex items-center justify-center transition-all ${selectedTools.includes('dimensions') ? 'bg-indigo-500 border-indigo-500 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'border-zinc-800'}`}>
-                    {selectedTools.includes('dimensions') && <Check className="w-3 h-3 text-white" strokeWidth={5} />}
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Dimensions</span>
-                </button>
-              )}
+              <button 
+                onClick={() => toggleTool('dimensions')}
+                className={`flex items-center gap-2.5 transition-all ${selectedTools.includes('dimensions') ? 'text-indigo-400' : 'text-zinc-655 hover:text-zinc-500'}`}
+              >
+                 <div className={`w-4 h-4 rounded-md border-2 flex items-center justify-center transition-all ${selectedTools.includes('dimensions') ? 'bg-indigo-500 border-indigo-500 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'border-zinc-800'}`}>
+                  {selectedTools.includes('dimensions') && <Check className="w-3 h-3 text-white" strokeWidth={5} />}
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest">Dimensions</span>
+              </button>
             </div>
 
             {/* Dev Mode Toggle */}
@@ -1022,7 +1143,7 @@ console.log("🚀 Running Design with Spectra Sync Pipeline...");
                     </motion.div>
                   )}
 
-                  {selectedTools.includes('dimensions') && dimensionsSystem && (
+                  {selectedTools.includes('dimensions') && (
                     <motion.div 
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}

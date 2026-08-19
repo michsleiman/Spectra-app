@@ -1,5 +1,8 @@
 {
   "name": "Spectra",
   "description": "A high-end color system generator using OKLCH perceptual color space. Currently in private beta. Request access to join the waitlist for AI-powered palette generation.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

@@ -21,7 +21,9 @@ import {
   Shield,
   FileText,
   HelpCircle,
-  Inbox
+  Inbox,
+  Zap,
+  Download
 } from 'lucide-react';
 import { 
   DimensionsData, 
@@ -29,6 +31,7 @@ import {
 } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './Button';
+import UnifiedExportModal from './UnifiedExportModal';
 
 export const DEFAULT_DIMENSIONS: DimensionsData = {
   spacing: {
@@ -65,6 +68,7 @@ export const DEFAULT_DIMENSIONS: DimensionsData = {
     { id: 'sp-6xl', name: 'spacing-6xl', value: 20, category: 'Spacing', type: 'spacing' },
     { id: 'sp-7xl', name: 'spacing-7xl', value: 24, category: 'Spacing', type: 'spacing' },
     { id: 'sp-8xl', name: 'spacing-8xl', value: 32, category: 'Spacing', type: 'spacing' },
+    { id: 'sp-9xl', name: 'spacing-9xl', value: 64, category: 'Spacing', type: 'spacing' },
 
     // Radius (Multiplier is based on 4px base value, or specific Full check)
     { id: 'r-none', name: 'radius-none', value: 0, category: 'Radius', type: 'radius' },
@@ -121,12 +125,14 @@ interface DimensionsToolProps {
 
 type PlaygroundScene = 'signin' | 'settings' | 'cards' | 'empty';
 
-export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSystem, onBack }) => {
+export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSystem, onBack, palette, typographySystem }) => {
   const [viewMode, setViewMode] = useState<'scales' | 'live'>('scales');
   const [selectedRailCategory, setSelectedRailCategory] = useState<'Spacing' | 'Radius' | 'Size'>('Spacing');
   const [showUseCases, setShowUseCases] = useState(true);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [showGuides, setShowGuides] = useState(true);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportState, setExportState] = useState<'idle' | 'success'>('idle');
 
   // Modal & form editing
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -821,15 +827,19 @@ export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSyste
             </div>
 
             <div className="flex items-center gap-5 py-2">
-              {viewMode === 'scales' && (
-                <button 
-                  onClick={() => handleAddSemantic(selectedRailCategory === 'Size' ? 'Component Size' : selectedRailCategory)}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg hover:shadow-indigo-500/20"
+              <div className="flex items-center gap-3 h-full">
+                <Button 
+                  variant="primary"
+                  leftIcon={exportState === 'success' ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                  onClick={() => {
+                    setIsExportModalOpen(true);
+                    setExportState('success');
+                    setTimeout(() => setExportState('idle'), 2000);
+                  }}
                 >
-                  <Plus className="w-3.5 h-3.5" strokeWidth={3} />
-                  + Token
-                </button>
-              )}
+                  {exportState === 'success' ? 'Exported' : 'Export'}
+                </Button>
+              </div>
             </div>
           </div>
         </header>
@@ -862,6 +872,15 @@ export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSyste
                         Design parameters matching outcome ratios
                       </span>
                     </div>
+
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleAddSemantic(selectedRailCategory === 'Size' ? 'Component Size' : selectedRailCategory)}
+                      leftIcon={<Plus className="w-3.5 h-3.5" strokeWidth={3} />}
+                    >
+                      Add Token
+                    </Button>
                   </div>
 
                   {/* Empty warning fallback */}
@@ -870,8 +889,16 @@ export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSyste
                       <Ruler className="w-8 h-8 text-zinc-700" />
                       <div>
                         <h4 className="text-sm font-bold text-zinc-400">No active tokens</h4>
-                        <p className="text-xs text-zinc-650 mt-1 uppercase font-semibold">Click + Token above to map customizable spacing attributes</p>
+                        <p className="text-xs text-zinc-500 mt-1 uppercase font-semibold">Click Add Token to map customizable spacing attributes</p>
                       </div>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => handleAddSemantic(selectedRailCategory === 'Size' ? 'Component Size' : selectedRailCategory)}
+                        leftIcon={<Plus className="w-3.5 h-3.5" strokeWidth={3} />}
+                      >
+                        Add Token
+                      </Button>
                     </div>
                   ) : selectedRailCategory === 'Size' ? (
                     /* Segmented Display for Size view */
@@ -879,15 +906,25 @@ export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSyste
                       {(['Component Size', 'Surface Size', 'Layout Size'] as const).map(sect => {
                         const sectTokens = filteredTokens.filter(t => t.category === sect);
                         if (sectTokens.length === 0) return null;
+                        const maxSectionPxValue = Math.max(...sectTokens.map(t => getTokenPxValue(t)).filter(v => v !== 9999 && v !== 999 && !isNaN(v)), 1);
                         return (
                           <div key={sect} className="space-y-3.5">
-                            <div className="flex items-center gap-2 px-1 border-b border-zinc-900/40 pb-2">
-                              <span className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-400 font-sans">
-                                {sect}
-                              </span>
-                              <span className="text-[9px] font-mono font-bold text-zinc-500 bg-zinc-900/40 px-2 py-0.5 rounded">
-                                {sectTokens.length} tokens
-                              </span>
+                            <div className="flex items-center justify-between px-1 border-b border-zinc-900/40 pb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-400 font-sans">
+                                  {sect}
+                                </span>
+                                <span className="text-[9px] font-mono font-bold text-zinc-500 bg-zinc-900/40 px-2 py-0.5 rounded">
+                                  {sectTokens.length} tokens
+                                </span>
+                              </div>
+                              <button 
+                                onClick={() => handleAddSemantic(sect)}
+                                className="text-[10px] font-bold text-zinc-500 hover:text-indigo-400 flex items-center gap-1 transition-colors uppercase tracking-wider font-sans"
+                              >
+                                <Plus className="w-3 h-3" />
+                                <span>Add {sect.replace(' Size', '')}</span>
+                              </button>
                             </div>
                             <div className="space-y-3">
                               {sectTokens.map(token => {
@@ -915,24 +952,30 @@ export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSyste
                                     </div>
 
                                     {/* Center Visual swatch */}
-                                    <div className="flex-1 flex items-center justify-center px-4">
-                                      <div className="relative h-7 w-44 bg-zinc-950/40 border border-zinc-800 rounded-lg overflow-hidden flex items-center justify-start shrink-0">
+                                    <div className="flex-1 flex items-center justify-start gap-5 px-4 min-w-0">
+                                      <span className="w-16 font-mono text-xs font-black text-indigo-400 shrink-0 text-left">
+                                        {pxValue === 9999 || pxValue === 999 ? 'Full' : `${pxValue}px`}
+                                      </span>
+                                      <div 
+                                        style={{ 
+                                          scrollbarWidth: 'none',
+                                          msOverflowStyle: 'none'
+                                        }}
+                                        className="relative h-3 flex-1 bg-zinc-950/40 border border-zinc-800 rounded-sm overflow-x-auto flex items-center justify-start min-w-0"
+                                      >
                                         <div 
                                           style={{ 
-                                            width: `${Math.min(100, (pxValue / 320) * 100)}%`
+                                            width: pxValue === 9999 || pxValue === 999 ? '100%' : `${pxValue}px`
                                           }}
-                                          className="h-full bg-gradient-to-r from-indigo-500/10 to-indigo-500/25 border-r border-indigo-500/40"
+                                          className="h-full bg-indigo-500 transition-all shrink-0 rounded-sm"
                                         />
-                                        <span className="absolute left-2.5 text-[9px] font-mono font-bold text-zinc-500 uppercase font-sans">
-                                          {pxValue}px swatch Max-Truncated
-                                        </span>
                                       </div>
                                     </div>
 
                                     {/* numeric outcome sizes */}
-                                    <div className="w-[110px] shrink-0 text-right flex flex-col pr-4">
+                                    <div className="hidden">
                                       <span className="text-sm font-mono font-black text-indigo-400">
-                                        {pxValue === 999 ? 'Full' : `${pxValue}px`}
+                                        {pxValue === 9999 || pxValue === 999 ? 'Full' : `${pxValue}px`}
                                       </span>
                                       <span className="text-[8.5px] font-black text-zinc-500 uppercase tracking-widest mt-0.5 font-sans">
                                         Outcome Size
@@ -1004,31 +1047,54 @@ export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSyste
                             </div>
 
                             {/* Center Visual swatch */}
-                            <div className="flex-1 flex items-center justify-center px-4">
+                            <div className="flex-1 flex items-center justify-start gap-5 px-4 min-w-0">
+                              <span className="w-16 font-mono text-xs font-black text-indigo-400 shrink-0 text-left">
+                                {pxValue === 9999 ? 'Full' : `${pxValue}px`}
+                              </span>
+
                               {selectedRailCategory === 'Spacing' && (
-                                <div className="flex flex-col items-center justify-center shrink-0">
-                                  <div style={{ gap: `${pxValue}px` }} className="flex flex-col justify-center items-center shrink-0">
-                                    <div className="h-2 w-16 bg-zinc-800 border border-zinc-700/60 rounded-sm" />
-                                    <div className="h-2 w-16 bg-zinc-800 border border-zinc-700/60 rounded-sm" />
-                                  </div>
+                                <div 
+                                  style={{ 
+                                    scrollbarWidth: 'none',
+                                    msOverflowStyle: 'none'
+                                  }}
+                                  className="flex-1 flex items-center justify-start overflow-x-auto min-w-0"
+                                >
+                                  {pxValue > 0 ? (
+                                    <div 
+                                      style={{ 
+                                        width: `${pxValue}px`
+                                      }}
+                                      className="h-3 bg-indigo-500 rounded-sm transition-all shadow-sm shadow-indigo-500/20 shrink-0"
+                                      title={`${pxValue}px Spacing`}
+                                    />
+                                  ) : (
+                                    <span className="text-[8px] font-mono font-bold text-zinc-600 uppercase tracking-widest">
+                                      0px Space
+                                    </span>
+                                  )}
                                 </div>
                               )}
 
                               {selectedRailCategory === 'Radius' && (
-                                <div className="flex justify-center items-center shrink-0">
+                                <div className="flex justify-start items-end h-14 w-32 shrink-0 relative">
                                   <div 
                                     style={{ 
-                                      borderRadius: pxValue === 9999 ? '999px' : `${pxValue}px` 
+                                      borderTopLeftRadius: pxValue === 9999 ? '999px' : `${pxValue}px`,
+                                      borderTopRightRadius: pxValue === 9999 ? '999px' : `${pxValue}px`,
+                                      borderBottomLeftRadius: '0px',
+                                      borderBottomRightRadius: '0px'
                                     }}
-                                    className="w-12 h-12 bg-indigo-500/5 hover:bg-indigo-500/10 border-2 border-indigo-500/30 shrink-0 shadow-inner flex items-center justify-center transition-all"
+                                    className="w-20 h-10 bg-indigo-500/5 hover:bg-indigo-500/10 border-2 border-b-0 border-indigo-500/30 shrink-0 transition-all"
                                     title={`Radius: ${pxValue}px`}
                                   />
+                                  <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-zinc-800/60" />
                                 </div>
                               )}
                             </div>
 
                             {/* numeric outcome sizes */}
-                            <div className="w-[110px] shrink-0 text-right flex flex-col pr-4">
+                            <div className="hidden">
                               <span className="text-sm font-mono font-black text-indigo-400">
                                 {pxValue === 9999 ? 'Full' : `${pxValue}px`}
                               </span>
@@ -1676,6 +1742,18 @@ export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSyste
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {isExportModalOpen && (
+          <UnifiedExportModal 
+            palette={palette || { id: '1', name: 'Spectra Export', systems: [], semantics: [], globalSettings: { masterControls: {} } }}
+            typographySystem={typographySystem || { fontSystems: [], baseGrid: 4, isGridSnapped: false, baseRem: 16, scaleFactor: 1.25, isScaleSynced: false, responsiveScale: 0.85, isResponsiveEnabled: true, semantics: [] }}
+            dimensionsSystem={system}
+            onClose={() => setIsExportModalOpen(false)}
+            initialTools={['colors', 'typography', 'dimensions']}
+          />
+        )}
+      </AnimatePresence>
 
     </div>
   );

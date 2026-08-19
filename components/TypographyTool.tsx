@@ -23,7 +23,7 @@ import {
   RotateCcw,
   Plus
 } from 'lucide-react';
-import { TypographyStep, TypographySystem, FontSystem, TypographySemanticToken, Palette } from '../types';
+import { TypographyStep, TypographySystem, FontSystem, TypographySemanticToken, Palette, DimensionsData } from '../types';
 import { Button } from './Button';
 
 import UnifiedExportModal from './UnifiedExportModal';
@@ -33,20 +33,22 @@ export const DEFAULT_STEPS: TypographyStep[] = [
   { id: 'sm', name: 'text-sm', fontSize: 14, lineHeight: 1.4285, letterSpacing: 0, fontWeight: 400 },
   { id: 'base', name: 'text-base', fontSize: 16, lineHeight: 1.5, letterSpacing: 0, fontWeight: 400 },
   { id: 'lg', name: 'text-lg', fontSize: 18, lineHeight: 1.5555, letterSpacing: 0, fontWeight: 400 },
-  { id: 'xl', name: 'text-xl', fontSize: 20, lineHeight: 1.4, letterSpacing: -0.01, fontWeight: 600 },
+  { id: 'xl', name: 'text-xl', fontSize: 20, lineHeight: 1.5, letterSpacing: -0.01, fontWeight: 600 },
   { id: '2xl', name: 'text-2xl', fontSize: 24, lineHeight: 1.3333, letterSpacing: -0.015, fontWeight: 600 },
-  { id: '3xl', name: 'text-3xl', fontSize: 30, lineHeight: 1.2, letterSpacing: -0.02, fontWeight: 700 },
-  { id: '4xl', name: 'text-4xl', fontSize: 36, lineHeight: 1.1111, letterSpacing: -0.02, fontWeight: 700 },
-  { id: '5xl', name: 'text-5xl', fontSize: 48, lineHeight: 1, letterSpacing: -0.025, fontWeight: 800 },
-  { id: '6xl', name: 'text-6xl', fontSize: 60, lineHeight: 1, letterSpacing: -0.025, fontWeight: 800 },
-  { id: '7xl', name: 'text-7xl', fontSize: 72, lineHeight: 1, letterSpacing: -0.03, fontWeight: 900 },
-  { id: '8xl', name: 'text-8xl', fontSize: 96, lineHeight: 1, letterSpacing: -0.03, fontWeight: 900 },
-  { id: '9xl', name: 'text-9xl', fontSize: 128, lineHeight: 1, letterSpacing: -0.04, fontWeight: 900 },
+  { id: '3xl', name: 'text-3xl', fontSize: 28, lineHeight: 1.2857, letterSpacing: -0.02, fontWeight: 700 },
+  { id: '4xl', name: 'text-4xl', fontSize: 32, lineHeight: 1.25, letterSpacing: -0.02, fontWeight: 700 },
+  { id: '5xl', name: 'text-5xl', fontSize: 36, lineHeight: 1.2222, letterSpacing: -0.02, fontWeight: 700 },
+  { id: '6xl', name: 'text-6xl', fontSize: 40, lineHeight: 1.2, letterSpacing: -0.025, fontWeight: 800 },
+  { id: '7xl', name: 'text-7xl', fontSize: 48, lineHeight: 1.1666, letterSpacing: -0.025, fontWeight: 800 },
+  { id: '8xl', name: 'text-8xl', fontSize: 60, lineHeight: 1.1333, letterSpacing: -0.025, fontWeight: 800 },
+  { id: '9xl', name: 'text-9xl', fontSize: 72, lineHeight: 1.1111, letterSpacing: -0.03, fontWeight: 900 },
+  { id: '10xl', name: 'text-10xl', fontSize: 92, lineHeight: 1.0869, letterSpacing: -0.03, fontWeight: 900 },
+  { id: '11xl', name: 'text-11xl', fontSize: 128, lineHeight: 1.0625, letterSpacing: -0.04, fontWeight: 900 },
 ];
 
 export const DEFAULT_SEMANTICS: TypographySemanticToken[] = [
-  { id: 'h1', name: 'Page Title', category: 'Content', fontSystemId: 'default', stepId: '6xl' },
-  { id: 'h2', name: 'Section Heading', category: 'Content', fontSystemId: 'default', stepId: '2xl' },
+  { id: 'h1', name: 'Page Title', category: 'Content', fontSystemId: 'default', stepId: '8xl' },
+  { id: 'h2', name: 'Section Heading', category: 'Content', fontSystemId: 'default', stepId: '3xl' },
   { id: 'h3', name: 'Sub-heading', category: 'Content', fontSystemId: 'default', stepId: 'xl' },
   { id: 'body', name: 'Body Text', category: 'Content', fontSystemId: 'default', stepId: 'base' },
   { id: 'body-sm', name: 'Small Body', category: 'Content', fontSystemId: 'default', stepId: 'sm' },
@@ -58,7 +60,7 @@ export const DEFAULT_SEMANTICS: TypographySemanticToken[] = [
   { id: 'sidebar-title', name: 'Sidebar Title', category: 'Navigation', fontSystemId: 'default', stepId: 'xs' },
   
   { id: 'stat-label', name: 'Stat Label', category: 'UI', fontSystemId: 'default', stepId: 'xs' },
-  { id: 'stat-value', name: 'Stat Value', category: 'UI', fontSystemId: 'default', stepId: '4xl' },
+  { id: 'stat-value', name: 'Stat Value', category: 'UI', fontSystemId: 'default', stepId: '5xl' },
   { id: 'button', name: 'Button Text', category: 'UI', fontSystemId: 'default', stepId: 'base' },
   { id: 'status', name: 'Status Tag', category: 'UI', fontSystemId: 'default', stepId: 'xs' },
   { id: 'label', name: 'Field Label', category: 'UI', fontSystemId: 'default', stepId: 'xs' },
@@ -95,11 +97,18 @@ export const DEFAULT_SYSTEM: TypographySystem = {
 const syncScale = (steps: TypographyStep[], factor: number) => {
   const baseIndex = steps.findIndex(s => s.id === 'base');
   if (baseIndex === -1) return steps;
-  const baseFontSize = steps[baseIndex].fontSize;
+  const baseFontSize = steps[baseIndex].fontSize || 16;
   
   return steps.map((step, index) => {
+    if (step.id === 'base') return { ...step, fontSize: baseFontSize };
+    if (index === 0 || step.id === 'xs') {
+      return { ...step, fontSize: 12 };
+    }
+    if (index === 1 || step.id === 'sm') {
+      return { ...step, fontSize: 14 };
+    }
     const power = index - baseIndex;
-    const newSize = Math.round(baseFontSize * Math.pow(factor, power));
+    const newSize = Math.max(12, Math.round(baseFontSize * Math.pow(factor, power)));
     return { ...step, fontSize: newSize };
   });
 };
@@ -263,6 +272,7 @@ interface TypographyToolProps {
   system: TypographySystem;
   setSystem: React.Dispatch<React.SetStateAction<TypographySystem>>;
   palette: Palette;
+  dimensionsSystem?: DimensionsData;
 }
 
 interface TypeSpecContextType {
@@ -383,7 +393,7 @@ const SemanticTypographyRow: React.FC<{
   );
 };
 
-const TypographyTool: React.FC<TypographyToolProps> = ({ onBack, system, setSystem, palette }) => {
+const TypographyTool: React.FC<TypographyToolProps> = ({ onBack, system, setSystem, palette, dimensionsSystem }) => {
   const [viewMode, setViewMode] = useState<'scales' | 'live'>('scales');
   const [activeFontSystemId, setActiveFontSystemId] = useState<string>(system.fontSystems[0]?.id || 'default');
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
@@ -1887,8 +1897,9 @@ const TypographyTool: React.FC<TypographyToolProps> = ({ onBack, system, setSyst
           <UnifiedExportModal 
             palette={palette}
             typographySystem={system}
+            dimensionsSystem={dimensionsSystem}
             onClose={() => setIsExportModalOpen(false)}
-            initialTools={['typography']}
+            initialTools={['colors', 'typography', 'dimensions']}
           />
         )}
       </AnimatePresence>

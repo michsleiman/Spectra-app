@@ -247,7 +247,7 @@ const Launcher: React.FC<LauncherProps> = ({ onSelectTool }) => {
                         <div className="mt-1 pt-1.5 border-t border-zinc-900/50 space-y-0.5">
                           <div className="flex justify-between text-[9px]">
                             <span className="text-pink-400/85">Display Scale Base:</span>
-                            <span className="text-zinc-400">16px → 20px → 25px → 31px → 39px</span>
+                            <span className="text-zinc-400">12px → 14px → 16px (Base) → 18px ... 128px</span>
                           </div>
                         </div>
                       </motion.div>
