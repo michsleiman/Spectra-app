@@ -23,13 +23,14 @@ import {
   HelpCircle,
   Inbox,
   Zap,
-  Download
+  Download,
+  GripVertical
 } from 'lucide-react';
 import { 
   DimensionsData, 
   DimensionSemanticToken,
 } from '../types';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, Reorder } from 'motion/react';
 import { Button } from './Button';
 import UnifiedExportModal from './UnifiedExportModal';
 
@@ -251,6 +252,25 @@ export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSyste
       }));
       setSemanticToDelete(null);
     }
+  };
+
+  const handleReorderTokens = (newOrderedTokens: DimensionSemanticToken[]) => {
+    setSystem(prev => {
+      const tokenIds = new Set(newOrderedTokens.map(t => t.id));
+      let newIdx = 0;
+      const nextSemantics = prev.semantics.map(tok => {
+        if (tokenIds.has(tok.id)) {
+          const updated = newOrderedTokens[newIdx];
+          newIdx++;
+          return updated;
+        }
+        return tok;
+      });
+      return {
+        ...prev,
+        semantics: nextSemantics
+      };
+    });
   };
 
   const handleAddSemantic = (category: string) => {
@@ -926,14 +946,23 @@ export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSyste
                                 <span>Add {sect.replace(' Size', '')}</span>
                               </button>
                             </div>
-                            <div className="space-y-3">
+                            <Reorder.Group 
+                              axis="y" 
+                              values={sectTokens} 
+                              onReorder={handleReorderTokens}
+                              className="space-y-3"
+                            >
                               {sectTokens.map(token => {
                                 const pxValue = getTokenPxValue(token);
                                 return (
-                                  <div 
+                                  <Reorder.Item 
                                     key={token.id}
+                                    value={token}
                                     className="bg-zinc-900/40 border border-zinc-800/50 p-4 rounded-2xl flex items-center hover:border-zinc-800 hover:bg-zinc-900/70 transition-all select-none group/row text-left"
                                   >
+                                    <div className="cursor-grab active:cursor-grabbing p-1 text-zinc-600 group-hover/row:text-zinc-400 hover:text-zinc-200 transition-colors mr-2 shrink-0">
+                                      <GripVertical size={14} />
+                                    </div>
                                     {/* Left Meta specs */}
                                     <div className="w-[180px] shrink-0 text-left flex flex-col gap-1 min-w-0 pr-4">
                                       <div className="flex items-center gap-1.5 min-w-0">
@@ -1010,25 +1039,34 @@ export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSyste
                                       </button>
                                     </div>
 
-                                  </div>
+                                  </Reorder.Item>
                                 );
                               })}
-                            </div>
+                            </Reorder.Group>
                           </div>
                         );
                       })}
                     </div>
                   ) : (
                     /* Token rows list (Spacing, Radius) */
-                    <div className="space-y-3">
+                    <Reorder.Group
+                      axis="y"
+                      values={filteredTokens}
+                      onReorder={handleReorderTokens}
+                      className="space-y-3"
+                    >
                       {filteredTokens.map(token => {
                         const pxValue = getTokenPxValue(token);
 
                         return (
-                          <div 
+                          <Reorder.Item 
                             key={token.id}
+                            value={token}
                             className="bg-zinc-900/40 border border-zinc-800/50 p-4 rounded-2xl flex items-center hover:border-zinc-800 hover:bg-zinc-900/70 transition-all select-none group/row text-left"
                           >
+                            <div className="cursor-grab active:cursor-grabbing p-1 text-zinc-600 group-hover/row:text-zinc-400 hover:text-zinc-200 transition-colors mr-2 shrink-0">
+                              <GripVertical size={14} />
+                            </div>
                             {/* Left Meta specs */}
                             <div className="w-[180px] shrink-0 text-left flex flex-col gap-1 min-w-0 pr-4">
                               <div className="flex items-center gap-1.5 min-w-0">
@@ -1131,10 +1169,10 @@ export const DimensionsTool: React.FC<DimensionsToolProps> = ({ system, setSyste
                               </button>
                             </div>
 
-                          </div>
+                          </Reorder.Item>
                         );
                       })}
-                    </div>
+                    </Reorder.Group>
                   )}
 
                 </div>

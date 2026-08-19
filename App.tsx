@@ -233,6 +233,10 @@ const App: React.FC = () => {
     setSystems(newOrder);
   }, []);
 
+  const handleReorderSemantics = useCallback((newSemantics: SemanticToken[]) => {
+    setSemantics(newSemantics);
+  }, []);
+
   const handleLockStep = (stepId: number, hex: string, updateBase = false) => {
     if (activeSystem.type === 'base') return;
     const newOklch = hexToOklch(hex);
@@ -423,6 +427,7 @@ const App: React.FC = () => {
               onUpdateSemantic={handleUpdateSemantic}
               onAddSemantic={handleAddSemantic}
               onDeleteSemantic={handleDeleteSemantic}
+              onReorderSemantics={handleReorderSemantics}
             />
           </div>
 

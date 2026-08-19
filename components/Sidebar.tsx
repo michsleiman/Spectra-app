@@ -22,6 +22,7 @@ interface SidebarProps {
   onUpdateSemantic: (tokenId: string, systemType: SystemType, stepId: number | 'white' | 'black') => void;
   onAddSemantic: (token: Partial<SemanticToken>) => void;
   onDeleteSemantic: (tokenId: string) => void;
+  onReorderSemantics?: (newOrder: SemanticToken[]) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -40,7 +41,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   theme,
   onUpdateSemantic,
   onAddSemantic,
-  onDeleteSemantic
+  onDeleteSemantic,
+  onReorderSemantics
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [isEditingSemantics, setIsEditingSemantics] = useState(false);
@@ -118,6 +120,20 @@ const Sidebar: React.FC<SidebarProps> = ({
       onUpdateSystemName(editingId, editingName.trim());
     }
     setEditingId(null);
+  };
+
+  const handleReorderCategory = (cat: string, newCatTokens: SemanticToken[]) => {
+    if (!onReorderSemantics) return;
+    let catIndex = 0;
+    const nextSemantics = semantics.map(s => {
+      if (s.category === cat) {
+        const updated = newCatTokens[catIndex];
+        catIndex++;
+        return updated;
+      }
+      return s;
+    });
+    onReorderSemantics(nextSemantics);
   };
 
   return (
@@ -337,22 +353,38 @@ const Sidebar: React.FC<SidebarProps> = ({
               
               return (
                 <section key={cat} className="space-y-2">
-                  <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600 px-3">
-                    {cat}
-                  </h3>
-                  <div className="space-y-1">
-                    {catTokens.map((sem) => (
-                      <SemanticRow 
-                        key={sem.id} 
-                        sem={sem} 
-                        theme={theme} 
-                        systems={systems}
-                        isEditing={isEditingSemantics}
-                        onUpdate={onUpdateSemantic}
-                        onDelete={onDeleteSemantic}
-                      />
-                    ))}
+                  <div className="flex items-center justify-between px-3">
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600">
+                      {cat}
+                    </h3>
+                    {isEditingSemantics && (
+                      <span className="text-[8px] font-mono text-zinc-500">drag to reorder</span>
+                    )}
                   </div>
+                  <Reorder.Group 
+                    axis="y" 
+                    values={catTokens} 
+                    onReorder={(newCatTokens) => handleReorderCategory(cat, newCatTokens)}
+                    className="space-y-1"
+                  >
+                    {catTokens.map((sem) => (
+                      <Reorder.Item
+                        key={sem.id}
+                        value={sem}
+                        dragListener={isEditingSemantics}
+                        className="rounded-xl overflow-hidden"
+                      >
+                        <SemanticRow 
+                          sem={sem} 
+                          theme={theme} 
+                          systems={systems}
+                          isEditing={isEditingSemantics}
+                          onUpdate={onUpdateSemantic}
+                          onDelete={onDeleteSemantic}
+                        />
+                      </Reorder.Item>
+                    ))}
+                  </Reorder.Group>
                 </section>
               );
             })}
@@ -392,28 +424,36 @@ const SemanticRow: React.FC<{
   const displaySystemType = (currentStep === 'white' || currentStep === 'black') ? 'base' : sem.systemType;
 
   return (
-    <div className="flex items-center px-2 py-1.5 rounded-xl hover:bg-zinc-900/40 transition-all group gap-2">
+    <div className={`flex items-center px-2 py-1.5 rounded-xl transition-all group gap-2 ${
+      isEditing 
+        ? 'bg-zinc-900/60 border border-zinc-800/60 hover:border-zinc-700' 
+        : 'hover:bg-zinc-900/40'
+    }`}>
+      {isEditing && (
+        <div className="cursor-grab active:cursor-grabbing p-1 text-zinc-600 group-hover:text-zinc-400 hover:text-zinc-200 transition-colors shrink-0">
+          <GripVertical size={14} />
+        </div>
+      )}
+
       <div className="flex items-center gap-2 min-w-0 flex-1">
-        {isEditing && (
-          <button 
-            onClick={(e) => { e.stopPropagation(); onDelete(sem.id); }}
-            className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-all shrink-0"
-          >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
         <div 
           className="w-3 h-3 rounded-full border border-white/10 flex-shrink-0" 
           style={{ backgroundColor: sem.hex }}
         />
-        <span className="text-[11px] font-bold text-zinc-200 leading-tight">
+        <span className="text-[11px] font-bold text-zinc-200 leading-tight truncate">
           {sem.name}
         </span>
       </div>
 
-      {!isEditing && (
+      {isEditing ? (
+        <button 
+          onClick={(e) => { e.stopPropagation(); onDelete(sem.id); }}
+          className="p-1 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded transition-all shrink-0"
+          title="Delete token"
+        >
+          <Trash2 size={13} />
+        </button>
+      ) : (
         <div className="flex items-center gap-1 shrink-0">
           <div className="relative w-20 sm:w-24">
             <select 

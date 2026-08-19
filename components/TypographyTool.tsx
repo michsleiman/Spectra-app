@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, Reorder } from 'motion/react';
 import { 
   Type, 
   Layers,
@@ -21,7 +21,8 @@ import {
   AlertTriangle,
   Check,
   RotateCcw,
-  Plus
+  Plus,
+  GripVertical
 } from 'lucide-react';
 import { TypographyStep, TypographySystem, FontSystem, TypographySemanticToken, Palette, DimensionsData } from '../types';
 import { Button } from './Button';
@@ -371,8 +372,13 @@ const SemanticTypographyRow: React.FC<{
   return (
     <div className="flex flex-col gap-2 p-3 rounded-2xl bg-zinc-900/30 border border-zinc-800/50 hover:border-zinc-700 transition-all group">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-200">{token.name}</span>
-        <span className="text-[9px] font-mono text-zinc-600 uppercase">{token.id}</span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className="cursor-grab active:cursor-grabbing p-0.5 text-zinc-600 group-hover:text-zinc-400 hover:text-zinc-200 transition-colors shrink-0">
+            <GripVertical size={13} />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-200 truncate">{token.name}</span>
+        </div>
+        <span className="text-[9px] font-mono text-zinc-600 uppercase shrink-0">{token.id}</span>
       </div>
       
       <div className="flex gap-1.5">
@@ -734,6 +740,22 @@ const TypographyTool: React.FC<TypographyToolProps> = ({ onBack, system, setSyst
     }));
   };
 
+  const handleReorderSemanticCategory = (category: string, newCategoryTokens: TypographySemanticToken[]) => {
+    let catIndex = 0;
+    const nextSemantics = system.semantics.map(s => {
+      if (s.category === category) {
+        const updated = newCategoryTokens[catIndex];
+        catIndex++;
+        return updated;
+      }
+      return s;
+    });
+    setSystem(prev => ({
+      ...prev,
+      semantics: nextSemantics
+    }));
+  };
+
   const removeStep = (id: string) => {
     if (skipDeleteConfirm) {
       setSteps(activeFontSystemId, currentSteps.filter(s => s.id !== id));
@@ -1038,19 +1060,32 @@ const TypographyTool: React.FC<TypographyToolProps> = ({ onBack, system, setSyst
                 
                 return (
                   <section key={category} className="space-y-3">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 px-1">
-                      {category}
-                    </h3>
-                    <div className="space-y-2">
-                       {tokens.map(token => (
-                         <SemanticTypographyRow 
-                           key={token.id} 
-                           token={token} 
-                           fontSystems={system.fontSystems}
-                           onUpdate={updateSemantic}
-                         />
-                       ))}
+                    <div className="flex items-center justify-between px-1">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600">
+                        {category}
+                      </h3>
+                      <span className="text-[8px] font-mono text-zinc-600">drag to reorder</span>
                     </div>
+                    <Reorder.Group
+                      axis="y"
+                      values={tokens}
+                      onReorder={(newTokens) => handleReorderSemanticCategory(category, newTokens)}
+                      className="space-y-2"
+                    >
+                       {tokens.map(token => (
+                         <Reorder.Item
+                           key={token.id}
+                           value={token}
+                           className="rounded-2xl overflow-hidden"
+                         >
+                           <SemanticTypographyRow 
+                             token={token} 
+                             fontSystems={system.fontSystems}
+                             onUpdate={updateSemantic}
+                           />
+                         </Reorder.Item>
+                       ))}
+                    </Reorder.Group>
                   </section>
                 );
               })}
