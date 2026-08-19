@@ -111,13 +111,14 @@ const App: React.FC = () => {
         parsed.fontSystems = parsed.fontSystems.map((fs: any) => {
           // If the font system has old step count or configuration, refresh steps to DEFAULT_STEPS with preserved family & name
           const hasNewSteps = fs.steps && fs.steps.length === DEFAULT_TYPOGRAPHY_SYSTEM.fontSystems[0].steps.length && fs.steps[fs.steps.length - 1].fontSize === 128 && fs.steps[0].fontSize === 12;
+          let updatedFs = { ...fs };
           if (!hasNewSteps) {
-            return {
-              ...fs,
-              steps: JSON.parse(JSON.stringify(DEFAULT_TYPOGRAPHY_SYSTEM.fontSystems[0].steps))
-            };
+            updatedFs.steps = JSON.parse(JSON.stringify(DEFAULT_TYPOGRAPHY_SYSTEM.fontSystems[0].steps));
           }
-          return fs;
+          if (!updatedFs.weights || !Array.isArray(updatedFs.weights) || updatedFs.weights.length === 0) {
+            updatedFs.weights = [400, 600, 700];
+          }
+          return updatedFs;
         });
       }
       return { ...DEFAULT_TYPOGRAPHY_SYSTEM, ...parsed };

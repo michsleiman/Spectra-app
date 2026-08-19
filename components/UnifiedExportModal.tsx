@@ -54,7 +54,10 @@ const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typogr
   };
 
   const totalColors = palette.systems.reduce((acc, sys) => acc + sys.steps.length, 0);
-  const totalTypography = typographySystem.fontSystems.reduce((acc, fs) => acc + fs.steps.length, 0);
+  const totalTypography = typographySystem.fontSystems.reduce(
+    (acc, fs) => acc + (fs.steps.length * ((fs.weights && fs.weights.length > 0) ? fs.weights.length : 3)), 
+    0
+  );
   const totalDimensions = activeDimensions.semantics.length;
   const totalModes = 2; // Fixed for now
 
@@ -77,6 +80,7 @@ const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typogr
   const getStylesData = () => {
     const stylesData: any[] = [];
     typographySystem.fontSystems.forEach(f => {
+      const selectedWeights = (f.weights && f.weights.length > 0) ? f.weights : [400, 600, 700];
       const sortedSteps = [...f.steps].sort((a,b) => a.fontSize - b.fontSize);
       f.steps.forEach(step => {
         const stepIndex = sortedSteps.findIndex(s => s.id === step.id);
@@ -84,19 +88,26 @@ const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typogr
           ? step 
           : (stepIndex > 0 ? sortedSteps[stepIndex - 1] : step);
 
-        stylesData.push({
-          id: `${f.id}-${step.id}`,
-          name: `${f.name}/${step.name}`,
-          family: f.family,
-          style: fontWeightToName(step.fontWeight),
-          size: step.fontSize,
-          mobileSize: mobileStep.fontSize,
-          mobileLineHeightPx: Math.round(mobileStep.lineHeight * mobileStep.fontSize), 
-          lineHeight: step.lineHeight,
-          letterSpacing: step.letterSpacing || 0,
-          weight: step.fontWeight,
-          fontSystemId: f.id,
-          fontSystemName: f.name
+        selectedWeights.forEach(weight => {
+          const weightName = fontWeightToName(weight);
+          const weightSuffix = weightName.toLowerCase();
+
+          stylesData.push({
+            id: `${f.id}-${step.id}-${weight}`,
+            name: `${f.name}/${step.name}-${weightSuffix}`,
+            baseStepName: step.name,
+            weightSuffix: weightSuffix,
+            family: f.family,
+            style: weightName,
+            size: step.fontSize,
+            mobileSize: mobileStep.fontSize,
+            mobileLineHeightPx: Math.round(mobileStep.lineHeight * mobileStep.fontSize), 
+            lineHeight: step.lineHeight,
+            letterSpacing: step.letterSpacing || 0,
+            weight: weight,
+            fontSystemId: f.id,
+            fontSystemName: f.name
+          });
         });
       });
     });

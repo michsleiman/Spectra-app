@@ -75,12 +75,25 @@ export const DEFAULT_SEMANTICS: TypographySemanticToken[] = [
   { id: 'code-block', name: 'Code Block', category: 'Code', fontSystemId: 'default', stepId: 'xs' },
 ];
 
+export const AVAILABLE_FONT_WEIGHTS = [
+  { weight: 100, label: 'Thin' },
+  { weight: 200, label: 'ExtraLight' },
+  { weight: 300, label: 'Light' },
+  { weight: 400, label: 'Regular' },
+  { weight: 500, label: 'Medium' },
+  { weight: 600, label: 'SemiBold' },
+  { weight: 700, label: 'Bold' },
+  { weight: 800, label: 'ExtraBold' },
+  { weight: 900, label: 'Black' },
+];
+
 export const DEFAULT_SYSTEM: TypographySystem = {
   fontSystems: [
     {
       id: 'default',
       name: 'Primary Font',
       family: 'Inter',
+      weights: [400, 600, 700],
       steps: [...DEFAULT_STEPS]
     }
   ],
@@ -676,6 +689,7 @@ const TypographyTool: React.FC<TypographyToolProps> = ({ onBack, system, setSyst
       id,
       name: `Font System ${system.fontSystems.length + 1}`,
       family: 'Inter',
+      weights: [400, 600, 700],
       steps: [...DEFAULT_STEPS]
     };
     setSystem(prev => ({
@@ -698,6 +712,19 @@ const TypographyTool: React.FC<TypographyToolProps> = ({ onBack, system, setSyst
       ...prev,
       fontSystems: prev.fontSystems.map(s => s.id === id ? { ...s, ...updates } : s)
     }));
+  };
+
+  const toggleWeight = (weight: number) => {
+    if (!currentFontSystem) return;
+    const currentWeights = currentFontSystem.weights || [400, 600, 700];
+    let newWeights: number[];
+    if (currentWeights.includes(weight)) {
+      if (currentWeights.length <= 1) return;
+      newWeights = currentWeights.filter(w => w !== weight);
+    } else {
+      newWeights = [...currentWeights, weight].sort((a, b) => a - b);
+    }
+    updateFontSystem(activeFontSystemId, { weights: newWeights });
   };
 
   const updateSemantic = (tokenId: string, updates: Partial<TypographySemanticToken>) => {
@@ -795,6 +822,38 @@ const TypographyTool: React.FC<TypographyToolProps> = ({ onBack, system, setSyst
                         suggestions={[...GOOGLE_FONTS_SANS, ...GOOGLE_FONTS_SERIF, ...GOOGLE_FONTS_MONO]}
                         onChange={(val) => updateFontSystem(activeFontSystemId, { family: val })}
                       />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between px-1">
+                        <label className="text-[11px] font-bold text-zinc-400 uppercase">Font Weights</label>
+                        <span className="text-[9px] font-mono font-bold text-indigo-400">
+                          {(currentFontSystem?.weights || [400, 600, 700]).length} selected
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-zinc-900 border border-zinc-800 rounded-xl">
+                        {AVAILABLE_FONT_WEIGHTS.map(({ weight, label }) => {
+                          const isSelected = (currentFontSystem?.weights || [400, 600, 700]).includes(weight);
+                          return (
+                            <button
+                              key={weight}
+                              type="button"
+                              onClick={() => toggleWeight(weight)}
+                              className={`px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-0.5 ${
+                                isSelected 
+                                  ? 'bg-indigo-600 text-white shadow-sm border border-indigo-500/50' 
+                                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 border border-transparent'
+                              }`}
+                            >
+                              <span className="leading-none">{weight}</span>
+                              <span className="text-[8px] opacity-75 font-normal capitalize tracking-normal">{label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[9px] text-zinc-500 px-1 font-sans">
+                        Figma text styles will be generated for each selected weight (e.g. text-sm-regular, text-sm-semibold, text-sm-bold).
+                      </p>
                     </div>
                   </div>
                 </div>

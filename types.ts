@@ -97,6 +97,7 @@ export interface FontSystem {
   name: string;
   family: string;
   steps: TypographyStep[];
+  weights?: number[]; // Selected font weights (e.g. [400, 600, 700])
 }
 
 export interface TypographySemanticToken {
