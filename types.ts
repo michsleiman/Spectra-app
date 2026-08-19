@@ -15,7 +15,7 @@ export interface ColorStep {
   contrastOnBlack: number;
 }
 
-export type SystemType = 'brand' | 'neutral' | 'success' | 'error' | 'warning' | 'base';
+export type SystemType = 'brand' | 'neutral' | 'success' | 'error' | 'warning' | 'base' | (string & {});
 
 export interface SystemControls {
   punch: number; 

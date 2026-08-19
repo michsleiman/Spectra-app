@@ -78,7 +78,11 @@ function getHexForStep(systems: ColorSystem[], type: SystemType, step: number | 
   if (step === 'white') return '#FFFFFF';
   if (step === 'black') return '#000000';
   
-  const sys = systems.find(s => s.type === type);
+  const sys = systems.find(s => 
+    s.type.toLowerCase() === type.toLowerCase() || 
+    s.id === type || 
+    s.name.toLowerCase() === type.toLowerCase()
+  );
   if (!sys) {
       if (type === 'base' && step === 0) return '#FFFFFF';
       if (type === 'base' && step === 1000) return '#000000';
@@ -86,7 +90,7 @@ function getHexForStep(systems: ColorSystem[], type: SystemType, step: number | 
   }
   
   const colorStep = sys.steps.find(s => s.id === step);
-  return colorStep ? colorStep.hex : '#888888';
+  return colorStep ? colorStep.hex : (sys.steps.find(s => s.id === 500)?.hex || sys.steps[0]?.hex || '#888888');
 }
 
 export function generateInitialSemantics(systems: ColorSystem[], theme: ThemeMode = 'light'): SemanticToken[] {

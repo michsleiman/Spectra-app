@@ -134,14 +134,14 @@ const UnifiedExportModal: React.FC<UnifiedExportModalProps> = ({ palette, typogr
       if (step === 'white' || step === 'black') {
         return `${baseSystem?.name || 'Base'}/${step === 'white' ? 0 : 1000}`;
       }
-      const sys = palette.systems.find(s => s.type === type);
+      const sys = palette.systems.find(s => s.type.toLowerCase() === type.toLowerCase() || s.id === type || s.name.toLowerCase() === type.toLowerCase());
       return `${sys?.name || type}/${step}`;
     };
 
     const getHexForAlias = (type: SystemType, step: number | 'white' | 'black') => {
       if (step === 'white') return '#FFFFFF';
       if (step === 'black') return '#000000';
-      const sys = palette.systems.find(s => s.type === type);
+      const sys = palette.systems.find(s => s.type.toLowerCase() === type.toLowerCase() || s.id === type || s.name.toLowerCase() === type.toLowerCase());
       return sys?.steps.find(s => s.id === step)?.hex || '#000000';
     };
 

@@ -88,6 +88,25 @@ const INITIAL_SYSTEMS: ColorSystem[] = [
   createSystem('base-1', 'Base', 'base', 0, 0),
 ];
 
+const ensureUniqueSystemTypes = (sysList: ColorSystem[]): ColorSystem[] => {
+  const seenTypes = new Set<string>();
+  return sysList.map((s, idx) => {
+    let type = s.type;
+    const isBrandDuplicate = s.type === 'brand' && s.name.toLowerCase() !== 'brand' && idx !== 0;
+    if (seenTypes.has(type.toLowerCase()) || isBrandDuplicate) {
+      const slug = s.name.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-') || `sys-${idx}`;
+      let candidate = slug;
+      let counter = 1;
+      while (seenTypes.has(candidate.toLowerCase())) {
+        candidate = `${slug}-${counter++}`;
+      }
+      type = candidate as SystemType;
+    }
+    seenTypes.add(type.toLowerCase());
+    return { ...s, type };
+  });
+};
+
 const App: React.FC = () => {
   const [currentTool, setCurrentTool] = useState<'launcher' | 'colors' | 'typography' | 'dimensions'>('launcher');
   const [systems, setSystems] = useState<ColorSystem[]>(INITIAL_SYSTEMS);
@@ -414,8 +433,22 @@ const App: React.FC = () => {
               onOpenAI={() => setIsAIModalOpen(true)}
               onAddSystem={(name, type, hex) => {
                 const id = Math.random().toString(36).substr(2, 9);
-                const newSys = createSystem(id, name, type, hexToOklch(hex).h, hexToOklch(hex).c);
-                setSystems(prev => [...prev.slice(0, -1), newSys, prev[prev.length - 1]]);
+                const slug = (type && type !== 'brand') 
+                  ? type 
+                  : (name.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-') || 'custom');
+                let safeType = slug;
+                let counter = 1;
+                while (systems.some(s => s.type.toLowerCase() === safeType.toLowerCase())) {
+                  safeType = `${slug}-${counter++}`;
+                }
+                const newSys = createSystem(id, name, safeType as SystemType, hexToOklch(hex).h, hexToOklch(hex).c);
+                setSystems(prev => {
+                  const baseIdx = prev.findIndex(s => s.type === 'base');
+                  const updated = baseIdx !== -1 
+                    ? [...prev.slice(0, baseIdx), newSys, ...prev.slice(baseIdx)]
+                    : [...prev, newSys];
+                  return ensureUniqueSystemTypes(updated);
+                });
                 setActiveSystemId(id);
                 setIsSidebarOpen(false);
               }}

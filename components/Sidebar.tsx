@@ -89,7 +89,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const handleAdd = () => {
     if (viewMode === 'scales') {
       if (newName.trim()) {
-        onAddSystem(newName.trim(), 'brand', '#3b82f6');
+        const typeSlug = newName.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-') || 'custom';
+        onAddSystem(newName.trim(), typeSlug as SystemType, '#3b82f6');
         setNewName('');
         setIsAdding(false);
       }
@@ -99,11 +100,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           id: `custom-${Date.now()}`,
           name: newSem.name,
           category: newSem.category,
-          systemType: newSem.systemType,
+          systemType: newSem.systemType || (systems[0]?.type || 'neutral'),
           lightStep: newSem.step,
           darkStep: newSem.step
         });
-        setNewSem({ name: '', category: 'Text', systemType: 'neutral', step: 500 });
+        setNewSem({ name: '', category: 'Text', systemType: systems[0]?.type || 'neutral', step: 500 });
         setIsAdding(false);
       }
     }
@@ -333,13 +334,22 @@ const Sidebar: React.FC<SidebarProps> = ({
                     value={newSem.name}
                     onChange={e => setNewSem({...newSem, name: e.target.value})}
                   />
-                  <select 
-                    className="w-full h-8 bg-zinc-950 border border-zinc-800 rounded px-2 text-[10px] font-bold uppercase tracking-widest focus:outline-none text-zinc-400"
-                    value={newSem.category}
-                    onChange={e => setNewSem({...newSem, category: e.target.value})}
-                  >
-                    {['Text', 'Border', 'Foreground', 'Background'].map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <select 
+                      className="w-full h-8 bg-zinc-950 border border-zinc-800 rounded px-2 text-[10px] font-bold uppercase tracking-widest focus:outline-none text-zinc-400"
+                      value={newSem.category}
+                      onChange={e => setNewSem({...newSem, category: e.target.value})}
+                    >
+                      {['Text', 'Border', 'Foreground', 'Background'].map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <select 
+                      className="w-full h-8 bg-zinc-950 border border-zinc-800 rounded px-2 text-[10px] font-bold uppercase tracking-widest focus:outline-none text-zinc-400"
+                      value={newSem.systemType}
+                      onChange={e => setNewSem({...newSem, systemType: e.target.value as SystemType})}
+                    >
+                      {systems.map(s => <option key={s.id} value={s.type}>{s.name}</option>)}
+                    </select>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="primary" size="sm" fullWidth onClick={handleAdd}>Add</Button>
@@ -421,7 +431,8 @@ const SemanticRow: React.FC<{
 }> = ({ sem, theme, systems, isEditing, onUpdate, onDelete }) => {
   const steps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
   const currentStep = theme === 'light' ? sem.lightStep : sem.darkStep;
-  const displaySystemType = (currentStep === 'white' || currentStep === 'black') ? 'base' : sem.systemType;
+  const isBaseStep = currentStep === 'white' || currentStep === 'black';
+  const displaySystemType = isBaseStep ? 'base' : sem.systemType;
 
   return (
     <div className={`flex items-center px-2 py-1.5 rounded-xl transition-all group gap-2 ${
@@ -458,7 +469,11 @@ const SemanticRow: React.FC<{
           <div className="relative w-20 sm:w-24">
             <select 
               value={displaySystemType}
-              onChange={(e) => onUpdate(sem.id, e.target.value as SystemType, currentStep)}
+              onChange={(e) => {
+                const chosenType = e.target.value as SystemType;
+                const nextStep = (chosenType !== 'base' && isBaseStep) ? 500 : currentStep;
+                onUpdate(sem.id, chosenType, nextStep);
+              }}
               className="w-full h-8 bg-zinc-900 border border-zinc-800 text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-1 sm:px-2 rounded-lg outline-none appearance-none cursor-pointer text-zinc-400 hover:border-zinc-700 transition-colors"
             >
               {systems.map(sys => (
@@ -475,7 +490,7 @@ const SemanticRow: React.FC<{
               onChange={(e) => {
                 const val = e.target.value;
                 const step = (val === 'white' || val === 'black') ? val : parseInt(val);
-                const systemToUse = (val === 'white' || val === 'black') ? 'base' : sem.systemType;
+                const systemToUse = (val === 'white' || val === 'black') ? 'base' : (sem.systemType === 'base' ? (systems.find(s => s.type !== 'base')?.type || 'brand') : sem.systemType);
                 onUpdate(sem.id, systemToUse as SystemType, step as any);
               }}
               className="w-full h-8 bg-zinc-900 border border-zinc-800 text-[8px] sm:text-[9px] font-mono font-black px-0.5 rounded-lg outline-none appearance-none cursor-pointer text-zinc-400 hover:border-zinc-700 transition-colors text-center"
